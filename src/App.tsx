@@ -258,7 +258,7 @@ function App() {
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-slate-700 shadow-md rounded-lg">
-            <thead className="bg-slate-950">
+            <thead className="bg-slate-800">
               <tr>
                 {Object.keys(data[0]).map((key) => (
                   <th
@@ -272,7 +272,7 @@ function App() {
             </thead>
             <tbody className="divide-y divide-gray-200">
               {sortedData.map((item, index) => (
-                <tr key={index} className="hover:bg-slate-800">
+                <tr key={index}>
                   {Object.entries(item).map(([key, value]) => (
                     <td key={key} className="px-6 py-4 text-sm text-gray-50">
                       {key === 'winRate' ? `${(value as number).toFixed(1)}%` : value}
