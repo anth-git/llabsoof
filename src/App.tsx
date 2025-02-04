@@ -263,7 +263,7 @@ function App() {
                 {Object.keys(data[0]).map((key) => (
                   <th
                     key={key}
-                    className="px-6 py-3 text-left text-sm font-semibold text-gray-50 uppercase tracking-wider cursor-pointer hover:bg-rose-900"
+                    className="px-6 py-3 text-left text-sm font-semibold text-gray-50 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort(key as keyof T)}>
                     {getHeaderName(key)} {renderSortIcon(key as keyof T)}
                   </th>
