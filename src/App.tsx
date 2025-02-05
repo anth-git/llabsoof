@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { ChevronUp, ChevronDown, CircleCheck, CircleX, ToggleLeft, ToggleRight } from 'lucide-react';
 import './App.css'
 
 interface Match {
@@ -14,6 +14,7 @@ interface PlayerStats {
   wins: number;  
   losses: number;
   winRate: number;
+  results: number[];
 }
 
 interface TeamStats {
@@ -22,6 +23,7 @@ interface TeamStats {
   wins: number;  
   losses: number;
   winRate: number;
+  results: number[];
 }
 
 interface MatchStats {
@@ -30,6 +32,7 @@ interface MatchStats {
   wins: number;
   losses: number;
   winRate: number;
+  results: number[];
 }
 
 type Stats = PlayerStats | TeamStats | MatchStats;
@@ -44,6 +47,7 @@ function App() {
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);  
   const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
   const [matchStats, setMatchStats] = useState<MatchStats[]>([]);
+  const [showTrends, setShowTrend] = useState<boolean>(false);
 
   useEffect(() => {
 
@@ -52,7 +56,7 @@ function App() {
       .then(data => data["files"]["llabsoof.txt"]["content"])
       .then(data => {
           const results = parseResults(data);
-          var [playerStats, teamStats, matchStats] = extractPlayerStats(results);
+          const [playerStats, teamStats, matchStats] = extractStats(results);
 
           setPlayerStats(playerStats);
           setTeamStats(teamStats);
@@ -63,6 +67,11 @@ function App() {
 
   function parseResults(results: string): Match[]  {
     const lines = results.split('\n');
+
+    const parseScore = (score: string): [number, number] => {
+      const parts = score.split(':');
+      return [+parts[0], +parts[1]];
+    }
 
     const matches: Match[] =  lines
     .map(line => line.split(' '))
@@ -76,17 +85,13 @@ function App() {
     });
 
     return matches;
-  }
-  
-  function parseScore(score: string): [number, number] {
-    const parts = score.split(':');
-    return [+parts[0], +parts[1]];
-  }
+  } 
 
-  const extractPlayerStats = (results: Match[]): [PlayerStats[], TeamStats[], MatchStats[]] => {
+
+  const extractStats = (results: Match[]): [PlayerStats[], TeamStats[], MatchStats[]] => {
     const playerStats: { [key: string]: PlayerStats } = {};
     const teamsStats: { [key: string]: TeamStats } = {};
-    const matchesStats: { [key: string]: MatchStats } = {};
+    const gamesStats: { [key: string]: MatchStats } = {};
       
     const getPlayers = (team: string): string[] => team.split('+');
       
@@ -97,7 +102,8 @@ function App() {
           games: 0,
           wins: 0,
           losses: 0,
-          winRate: 0
+          winRate: 0,
+          results: []
         };
       }
     };
@@ -109,19 +115,21 @@ function App() {
           games: 0,
           wins: 0,
           losses: 0,
-          winRate: 0
+          winRate: 0,
+          results: []
         };
       }
     };
 
     const initializeMatchStats = (match: string) => {
-      if (!matchesStats[match]) {
-        matchesStats[match] = {
+      if (!gamesStats[match]) {
+        gamesStats[match] = {
           match,
           games: 0,
           wins: 0,
           losses: 0,
-          winRate: 0
+          winRate: 0,
+          results: []
         };
       }
     };
@@ -134,7 +142,7 @@ function App() {
       const team2Players = getPlayers(team_2);
       const players = [...team1Players, ...team2Players];
       const teams = [team_1, team_2];
-      const matchCombinations = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];
+      const games = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];
       
       //
 
@@ -142,11 +150,23 @@ function App() {
       players.forEach(player => playerStats[player].games++);      
       
       if (score1 > score2) {
-        team1Players.forEach(player => playerStats[player].wins++);
-        team2Players.forEach(player => playerStats[player].losses++);
+        team1Players.forEach(player =>  {
+          playerStats[player].wins++;
+          playerStats[player].results.push(1);
+        });
+        team2Players.forEach(player => {
+          playerStats[player].losses++;
+          playerStats[player].results.push(-1);
+        });
       } else if (score2 > score1) {
-        team2Players.forEach(player => playerStats[player].wins++);
-        team1Players.forEach(player => playerStats[player].losses++);
+        team2Players.forEach(player => {
+          playerStats[player].wins++;
+          playerStats[player].results.push(1);          
+        });
+        team1Players.forEach(player => {
+          playerStats[player].losses++;
+          playerStats[player].results.push(-1);
+        });
       }
 
       Object.values(playerStats).forEach(stats => {
@@ -161,9 +181,15 @@ function App() {
       if (score1 > score2) {
         teamsStats[team_1].wins++;
         teamsStats[team_2].losses++;
+
+        teamsStats[team_1].results.push(1);
+        teamsStats[team_2].results.push(-1);
       } else if (score2 > score1) {
         teamsStats[team_2].wins++;
         teamsStats[team_1].losses++;
+
+        teamsStats[team_2].results.push(1);
+        teamsStats[team_1].results.push(-1);
       }
       
       Object.values(teamsStats).forEach(stats => {
@@ -172,25 +198,31 @@ function App() {
 
       //
 
-      matchCombinations.forEach(initializeMatchStats);
-      matchCombinations.forEach(game => matchesStats[game].games++);
-      const match1 = matchCombinations[0];
-      const match2 = matchCombinations[1];
+      games.forEach(initializeMatchStats);
+      games.forEach(game => gamesStats[game].games++);
+      const t1vst2 = games[0];
+      const t2vst1 = games[1];
       
       if (score1 > score2) {
-        matchesStats[match1].wins++;
-        matchesStats[match2].losses++;
+        gamesStats[t1vst2].wins++;
+        gamesStats[t2vst1].losses++;
+
+        gamesStats[t1vst2].results.push(1);
+        gamesStats[t2vst1].results.push(-1);
       } else if (score2 > score1) {
-        matchesStats[match2].wins++;
-        matchesStats[match1].losses++;
+        gamesStats[t2vst1].wins++;
+        gamesStats[t1vst2].losses++;
+
+        gamesStats[t2vst1].results.push(1);
+        gamesStats[t1vst2].results.push(-1);
       }
 
-      Object.values(matchesStats).forEach(stats => {
+      Object.values(gamesStats).forEach(stats => {
         stats.winRate = (stats.wins / stats.games) * 100;
       });
     });   
       
-    return [Object.values(playerStats), Object.values(teamsStats), Object.values(matchesStats)];
+    return [Object.values(playerStats), Object.values(teamsStats), Object.values(gamesStats)];
   };
 
   const SortableTable = <T extends Stats>({ data, title }: SortableTableProps<T>) => {
@@ -238,12 +270,13 @@ function App() {
           return key.charAt(0).toUpperCase() + key.slice(1);
         case 'winRate':
           return 'Win Rate';
+          case 'results':
+            return 'Recent Games';
         default:
           return key.charAt(0).toUpperCase() + key.slice(1);
       }
     };
-  
-    // Add check for empty data
+
     if (!data || data.length === 0) {
       return (
         <div className="w-full max-w-4xl mb-8">
@@ -252,7 +285,9 @@ function App() {
         </div>
       );
     }
-  
+
+    const trends = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
+
     return (
       <div className="w-full max-w-4xl mb-8">
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
@@ -261,12 +296,12 @@ function App() {
             <thead className="bg-slate-800">
               <tr>
                 {Object.keys(data[0]).map((key) => (
-                  <th
+                    <th
                     key={key}
-                    className="px-6 py-3 text-left text-sm font-semibold text-gray-50 uppercase tracking-wider cursor-pointer"
+                    className={`px-6 py-3 text-left text-sm font-semibold text-gray-50 uppercase tracking-wider cursor-pointer ${trends(key) ? 'hidden' : ''} sm:table-cell`}
                     onClick={() => handleSort(key as keyof T)}>
                     {getHeaderName(key)} {renderSortIcon(key as keyof T)}
-                  </th>
+                    </th>
                 ))}
               </tr>
             </thead>
@@ -274,8 +309,21 @@ function App() {
               {sortedData.map((item, index) => (
                 <tr key={index}>
                   {Object.entries(item).map(([key, value]) => (
-                    <td key={key} className="px-6 py-4 text-sm text-gray-50">
-                      {key === 'winRate' ? `${(value as number).toFixed(1)}%` : value}
+                    <td key={key} className={`px-6 py-4 text-sm text-gray-50 ${trends(key) ? 'hidden' : ''} sm:table-cell`}>
+                      {(() => {
+                      switch (key) {
+                        case 'results':
+                            return (value as number[]).slice(-15).map((result, idx) => (
+                              result === 1 
+                                ? <CircleCheck key={idx} className="inline w-4 h-4 text-green-300 mx-0.5" /> 
+                                : <CircleX key={idx} className="inline w-4 h-4 text-red-400 mx-0.5" />
+                            ));
+                        case 'winRate':
+                          return `${(value as number).toFixed(1)}%`;
+                        default:
+                          return value;
+                      }
+                      })()}
                     </td>
                   ))}
                 </tr>
@@ -288,7 +336,18 @@ function App() {
   };
 
   return (
+    
     <div className="p-6 space-y-8">
+        
+    <div className="flex justify-between items-center mb-4 sm:hidden">      
+      <button 
+        onClick={() => setShowTrend(!showTrends)} 
+        className="flex items-center text-gray-50">
+        {showTrends ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
+        <span className="ml-2 text-amber-400">{showTrends ? 'Recent Games' : 'Recent Games'}</span>
+      </button>
+    </div>
+
       <SortableTable<PlayerStats> 
         data={playerStats} 
         title="Player Statistics" 
