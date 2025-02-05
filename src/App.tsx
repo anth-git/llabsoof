@@ -45,7 +45,8 @@ interface SortableTableProps<T extends Stats> {
 function App() {  
   
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);  
-  const [teamStats, setTeamStats] = useState<TeamStats[]>([]);
+  const [teamStatsOverall, setTeamStatsOverall] = useState<TeamStats[]>([]);
+  const [teamStatsSpecific, setTeamStatsSpecific] = useState<TeamStats[]>([]);
   const [matchStats, setMatchStats] = useState<MatchStats[]>([]);
   const [showTrends, setShowTrend] = useState<boolean>(false);
 
@@ -56,10 +57,11 @@ function App() {
       .then(data => data["files"]["llabsoof.txt"]["content"])
       .then(data => {
           const results = parseResults(data);
-          const [playerStats, teamStats, matchStats] = extractStats(results);
+          const [playerStats, teamStatsOverall, teamStatsSpecific, matchStats] = extractStats(results);
 
           setPlayerStats(playerStats);
-          setTeamStats(teamStats);
+          setTeamStatsOverall(teamStatsOverall);
+          setTeamStatsSpecific(teamStatsSpecific);
           setMatchStats(matchStats);
         })
         .catch(error => console.error('Error fetching the text file:', error));
@@ -88,9 +90,10 @@ function App() {
   } 
 
 
-  const extractStats = (results: Match[]): [PlayerStats[], TeamStats[], MatchStats[]] => {
+  const extractStats = (results: Match[]): [PlayerStats[], TeamStats[], TeamStats[], MatchStats[]] => {
     const playerStats: { [key: string]: PlayerStats } = {};
-    const teamsStats: { [key: string]: TeamStats } = {};
+    const teamStatsOverall: { [key: string]: TeamStats } = {};
+    const teamStatsSpecific: { [key: string]: TeamStats } = {};
     const gamesStats: { [key: string]: MatchStats } = {};
       
     const getPlayers = (team: string): string[] => team.split('+');
@@ -108,9 +111,9 @@ function App() {
       }
     };
 
-    const initializeTeamStats = (team: string) => {
-      if (!teamsStats[team]) {
-        teamsStats[team] = {
+    const initializeTeamOverallStats = (team: string) => {
+      if (!teamStatsOverall[team]) {
+        teamStatsOverall[team] = {
           team,
           games: 0,
           wins: 0,
@@ -121,6 +124,18 @@ function App() {
       }
     };
 
+    const initializeTeamSpecificStats = (team: string) => {
+      if (!teamStatsSpecific[team]) {
+        teamStatsSpecific[team] = {
+          team,
+          games: 0,
+          wins: 0,
+          losses: 0,
+          winRate: 0,
+          results: []
+        };
+      }
+    };
     const initializeMatchStats = (match: string) => {
       if (!gamesStats[match]) {
         gamesStats[match] = {
@@ -140,8 +155,11 @@ function App() {
         
       const team1Players = getPlayers(team_1);
       const team2Players = getPlayers(team_2);
+      const team1Overall = team1Players.sort().join(', ');
+      const team2Overall = team2Players.sort().join(', ');
       const players = [...team1Players, ...team2Players];
-      const teams = [team_1, team_2];
+      const teams_overall = [team1Overall, team2Overall];
+      const teams_specific = [team_1, team_2];
       const games = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];
       
       //
@@ -175,24 +193,47 @@ function App() {
 
       //
 
-      teams.forEach(initializeTeamStats);
-      teams.forEach(team => teamsStats[team].games++);
+      teams_overall.forEach(initializeTeamOverallStats);
+      teams_overall.forEach(team => teamStatsOverall[team].games++);
       
       if (score1 > score2) {
-        teamsStats[team_1].wins++;
-        teamsStats[team_2].losses++;
+        teamStatsOverall[team1Overall].wins++;
+        teamStatsOverall[team2Overall].losses++;
 
-        teamsStats[team_1].results.push(1);
-        teamsStats[team_2].results.push(-1);
+        teamStatsOverall[team1Overall].results.push(1);
+        teamStatsOverall[team2Overall].results.push(-1);
       } else if (score2 > score1) {
-        teamsStats[team_2].wins++;
-        teamsStats[team_1].losses++;
+        teamStatsOverall[team2Overall].wins++;
+        teamStatsOverall[team1Overall].losses++;
 
-        teamsStats[team_2].results.push(1);
-        teamsStats[team_1].results.push(-1);
+        teamStatsOverall[team2Overall].results.push(1);
+        teamStatsOverall[team1Overall].results.push(-1);
       }
       
-      Object.values(teamsStats).forEach(stats => {
+      Object.values(teamStatsOverall).forEach(stats => {
+        stats.winRate = (stats.wins / stats.games) * 100;
+      });
+
+      //
+
+      teams_specific.forEach(initializeTeamSpecificStats);
+      teams_specific.forEach(team => teamStatsSpecific[team].games++);
+      
+      if (score1 > score2) {
+        teamStatsSpecific[team_1].wins++;
+        teamStatsSpecific[team_2].losses++;
+
+        teamStatsSpecific[team_1].results.push(1);
+        teamStatsSpecific[team_2].results.push(-1);
+      } else if (score2 > score1) {
+        teamStatsSpecific[team_2].wins++;
+        teamStatsSpecific[team_1].losses++;
+
+        teamStatsSpecific[team_2].results.push(1);
+        teamStatsSpecific[team_1].results.push(-1);
+      }
+      
+      Object.values(teamStatsSpecific).forEach(stats => {
         stats.winRate = (stats.wins / stats.games) * 100;
       });
 
@@ -222,7 +263,7 @@ function App() {
       });
     });   
       
-    return [Object.values(playerStats), Object.values(teamsStats), Object.values(gamesStats)];
+    return [Object.values(playerStats), Object.values(teamStatsOverall), Object.values(teamStatsSpecific), Object.values(gamesStats)];
   };
 
   const SortableTable = <T extends Stats>({ data, title }: SortableTableProps<T>) => {
@@ -350,16 +391,19 @@ function App() {
 
       <SortableTable<PlayerStats> 
         data={playerStats} 
-        title="Player Statistics" 
-      />
+        title="Player Statistics" />   
+
       <SortableTable<TeamStats> 
-        data={teamStats} 
-        title="Team Statistics" 
-      />
+        data={teamStatsOverall} 
+        title="Team Statistics (Overall)" />
+
+      <SortableTable<TeamStats> 
+        data={teamStatsSpecific} 
+        title="Team Statistics (Specific Player Positions)" />
+
       <SortableTable<MatchStats> 
         data={matchStats} 
-        title="Match Statistics" 
-      />
+        title="Match Statistics" />
     </div>
   );
 }
