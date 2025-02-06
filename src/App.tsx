@@ -328,6 +328,24 @@ function App() {
     }
 
     const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
+    const getPlayerColor = (player: string) => {
+      switch(player) {
+        case 'AH':
+          return 'text-rose-400';
+        case 'WS':
+          return 'text-cyan-400';
+        case 'JP':
+          return 'text-lime-400';
+        case 'TW':
+          return 'text-yellow-400';
+        default:
+          return 'text-gray-50';
+      }
+    }
+    const stylePlayers = (value: string) => {
+      const players = value.split(' ');
+      return players.map(player => (<span className={`px-1 ${getPlayerColor(player)}`}>{player}</span>));
+    };
 
     return (
       <div className="w-full max-w-4xl mb-8">
@@ -353,6 +371,10 @@ function App() {
                     <td key={key} className={`px-2 py-3 text-sm text-gray-50 ${trendMode(key) ? 'hidden' : ''} ${key === 'results' ? 'w-[180px] md:w-[300px] text-right' : ''} sm:table-cell whitespace-nowrap`}>
                       {(() => {
                       switch (key) {
+                        case 'player':
+                        case 'team':
+                        case 'match':
+                          return stylePlayers(value);
                         case 'results':
                             return (
                               <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }}>
