@@ -80,9 +80,9 @@ function App() {
     .filter(parts => parts.length === 3)
     .map(parts => {
       return {
-        team_1: parts[0].toUpperCase(),
-        team_2: parts[1].toUpperCase(),
-        score: parseScore(parts[2]),
+        team_1: parts[0].replace('+', ' ').toUpperCase(),
+        team_2: parts[1].replace('+', ' ').toUpperCase(),
+        score: parseScore(parts[2])
       };
     });
 
@@ -96,7 +96,7 @@ function App() {
     const teamStatsSpecific: { [key: string]: TeamStats } = {};
     const gamesStats: { [key: string]: MatchStats } = {};
       
-    const getPlayers = (team: string): string[] => team.split('+');
+    const getPlayers = (team: string): string[] => team.split(' ');
       
     const initializePlayerStats = (player: string) => {
       if (!playerStats[player]) {
@@ -155,8 +155,8 @@ function App() {
         
       const team1Players = getPlayers(team_1);
       const team2Players = getPlayers(team_2);
-      const team1Overall = team1Players.sort().join(', ');
-      const team2Overall = team2Players.sort().join(', ');
+      const team1Overall = team1Players.sort().join(' ');
+      const team2Overall = team2Players.sort().join(' ');
       const players = [...team1Players, ...team2Players];
       const teams_overall = [team1Overall, team2Overall];
       const teams_specific = [team_1, team_2];
@@ -327,7 +327,7 @@ function App() {
       );
     }
 
-    const trends = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
+    const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
 
     return (
       <div className="w-full max-w-4xl mb-8">
@@ -339,7 +339,7 @@ function App() {
                 {Object.keys(data[0]).map((key) => (
                     <th
                     key={key}
-                    className={`px-6 py-3 text-left text-sm font-semibold text-gray-50 uppercase tracking-wider cursor-pointer ${trends(key) ? 'hidden' : ''} sm:table-cell`}
+                    className={`px-2 py-3 text-sm font-semibold text-gray-50 text-center uppercase tracking-wider cursor-pointer ${trendMode(key) ? 'hidden' : ''} sm:table-cell`}
                     onClick={() => handleSort(key as keyof T)}>
                     {getHeaderName(key)} {renderSortIcon(key as keyof T)}
                     </th>
@@ -350,15 +350,19 @@ function App() {
               {sortedData.map((item, index) => (
                 <tr key={index}>
                   {Object.entries(item).map(([key, value]) => (
-                    <td key={key} className={`px-6 py-4 text-sm text-gray-50 ${trends(key) ? 'hidden' : ''} sm:table-cell`}>
+                    <td key={key} className={`px-2 py-3 text-sm text-gray-50 ${trendMode(key) ? 'hidden' : ''} ${key === 'results' ? 'w-[180px] md:w-[300px] text-right' : ''} sm:table-cell whitespace-nowrap`}>
                       {(() => {
                       switch (key) {
                         case 'results':
-                            return (value as number[]).slice(-15).map((result, idx) => (
-                              result === 1 
+                            return (
+                              <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }}>
+                              {(value as number[]).map((result, idx) => (
+                                result === 1 
                                 ? <CircleCheck key={idx} className="inline w-4 h-4 text-green-300 mx-0.5" /> 
                                 : <CircleX key={idx} className="inline w-4 h-4 text-red-400 mx-0.5" />
-                            ));
+                              ))}
+                              </div>
+                            );
                         case 'winRate':
                           return `${(value as number).toFixed(1)}%`;
                         default:
@@ -399,7 +403,7 @@ function App() {
 
       <SortableTable<TeamStats> 
         data={teamStatsSpecific} 
-        title="Team Statistics (Specific Player Positions)" />
+        title="Team Statistics (Positions)" />
 
       <SortableTable<MatchStats> 
         data={matchStats} 
