@@ -170,20 +170,20 @@ function App() {
       if (score1 > score2) {
         team1Players.forEach(player =>  {
           playerStats[player].wins++;
-          playerStats[player].results.push(1);
+          playerStats[player].results.unshift(1);
         });
         team2Players.forEach(player => {
           playerStats[player].losses++;
-          playerStats[player].results.push(-1);
+          playerStats[player].results.unshift(-1);
         });
       } else if (score2 > score1) {
         team2Players.forEach(player => {
           playerStats[player].wins++;
-          playerStats[player].results.push(1);          
+          playerStats[player].results.unshift(1);          
         });
         team1Players.forEach(player => {
           playerStats[player].losses++;
-          playerStats[player].results.push(-1);
+          playerStats[player].results.unshift(-1);
         });
       }
 
@@ -200,14 +200,14 @@ function App() {
         teamStatsOverall[team1Overall].wins++;
         teamStatsOverall[team2Overall].losses++;
 
-        teamStatsOverall[team1Overall].results.push(1);
-        teamStatsOverall[team2Overall].results.push(-1);
+        teamStatsOverall[team1Overall].results.unshift(1);
+        teamStatsOverall[team2Overall].results.unshift(-1);
       } else if (score2 > score1) {
         teamStatsOverall[team2Overall].wins++;
         teamStatsOverall[team1Overall].losses++;
 
-        teamStatsOverall[team2Overall].results.push(1);
-        teamStatsOverall[team1Overall].results.push(-1);
+        teamStatsOverall[team2Overall].results.unshift(1);
+        teamStatsOverall[team1Overall].results.unshift(-1);
       }
       
       Object.values(teamStatsOverall).forEach(stats => {
@@ -223,14 +223,14 @@ function App() {
         teamStatsSpecific[team_1].wins++;
         teamStatsSpecific[team_2].losses++;
 
-        teamStatsSpecific[team_1].results.push(1);
-        teamStatsSpecific[team_2].results.push(-1);
+        teamStatsSpecific[team_1].results.unshift(1);
+        teamStatsSpecific[team_2].results.unshift(-1);
       } else if (score2 > score1) {
         teamStatsSpecific[team_2].wins++;
         teamStatsSpecific[team_1].losses++;
 
-        teamStatsSpecific[team_2].results.push(1);
-        teamStatsSpecific[team_1].results.push(-1);
+        teamStatsSpecific[team_2].results.unshift(1);
+        teamStatsSpecific[team_1].results.unshift(-1);
       }
       
       Object.values(teamStatsSpecific).forEach(stats => {
@@ -248,14 +248,14 @@ function App() {
         gamesStats[t1vst2].wins++;
         gamesStats[t2vst1].losses++;
 
-        gamesStats[t1vst2].results.push(1);
-        gamesStats[t2vst1].results.push(-1);
+        gamesStats[t1vst2].results.unshift(1);
+        gamesStats[t2vst1].results.unshift(-1);
       } else if (score2 > score1) {
         gamesStats[t2vst1].wins++;
         gamesStats[t1vst2].losses++;
 
-        gamesStats[t2vst1].results.push(1);
-        gamesStats[t1vst2].results.push(-1);
+        gamesStats[t2vst1].results.unshift(1);
+        gamesStats[t1vst2].results.unshift(-1);
       }
 
       Object.values(gamesStats).forEach(stats => {
