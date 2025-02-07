@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { ChevronUp, ChevronDown, CircleCheck, CircleX, ToggleLeft, ToggleRight } from 'lucide-react';
-import { Tooltip } from 'react-tooltip'
+import { Tooltip, TooltipRefProps } from 'react-tooltip'
 import './App.css'
 
 interface Match {
@@ -66,7 +66,8 @@ function App() {
   const [teamStatsOverall, setTeamStatsOverall] = useState<TeamStats[]>([]);
   const [teamStatsSpecific, setTeamStatsSpecific] = useState<TeamStats[]>([]);
   const [matchStats, setMatchStats] = useState<MatchStats[]>([]);
-  const [showTrends, setShowTrend] = useState<boolean>(false);
+  const [showTrends, setShowTrend] = useState<boolean>(false);  
+  const tooltipRef = useRef<TooltipRefProps>(null)
 
   useEffect(() => {
     fetch("https://api.github.com/gists/16fc9291f9b939835ade9494a75de5cb")
@@ -444,6 +445,31 @@ function App() {
       );
     }  
 
+    const handleScroll = (e: React.MouseEvent<HTMLDivElement>) => {
+      
+      tooltipRef.current?.close();
+
+      const div = e.currentTarget;
+      const startX = e.pageX - div.offsetLeft;
+      const scrollLeft = div.scrollLeft;     
+
+      const onMouseMove = (e: MouseEvent) => {
+        const x = e.pageX - div.offsetLeft;
+        const walk = (x - startX) * 1;
+        div.scrollLeft = scrollLeft - walk;
+
+        tooltipRef.current?.close();
+      };
+
+      const onMouseUp = () => {
+        window.removeEventListener('mousemove', onMouseMove);
+        window.removeEventListener('mouseup', onMouseUp);        
+      };
+
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+
     return (
       <div className="w-full max-w-5xl mb-8">
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
@@ -474,7 +500,7 @@ function App() {
                           return stylePlayers(value);
                         case 'results':
                             return (
-                              <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }}>
+                              <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }} onMouseDown={handleScroll}>
                               {(value as Result[]).map((result, idx) => (
                                 <span key={idx} className="cursor-default" data-tooltip-id="my-tooltip" data-tooltip-content={result.match}>
                                   {result.win
@@ -530,7 +556,7 @@ function App() {
         data={matchStats} 
         title="Match Statistics" />
 
-      <Tooltip id="my-tooltip" style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
+      <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
         return stylePlayers(content!);
       }}/>
     </div>
