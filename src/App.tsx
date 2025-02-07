@@ -550,7 +550,7 @@ function App() {
 
       <SortableTable<TeamStats> 
         data={teamStatsSpecific} 
-        title="Team Statistics (Positions)" />
+        title="Team Statistics (Positions: Defence Offence)" />
 
       <SortableTable<MatchStats> 
         data={matchStats} 
