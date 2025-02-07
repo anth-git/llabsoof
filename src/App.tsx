@@ -92,7 +92,7 @@ function App() {
     const lines = results.split('\n');
     const matches: Match[] = [];
 
-    let date = '';
+    let date = 'Unknownd date';
     for (let line of lines) {
       line = line.trim();
       if (line === '') {
@@ -633,6 +633,11 @@ function App() {
         title="Match Statistics" />
 
       <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
+
+        if (!content) {
+          return null;
+        }
+        
         const parts = content?.split('|')!;
         const date = parts[0];
         const teams = parts[1];
