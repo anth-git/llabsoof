@@ -61,29 +61,92 @@ interface SortableTableProps<T extends Stats> {
   title: string;
 }
 
+// const sss = `
+// 13.01.25
+// ah+ws jp+tw 0:1
+// tw+ah ws+jp 0:1
+// ah+jp tw+ws 1:0
+
+// 13.01.25
+// ws+ah jp+tw 1:0
+// ah+jp tw+ws 1:0
+// tw+ah ws+jp 1:0
+
+// 13.01.25
+// ah+jp ws+tw 0:1
+// tw+ah jp+ws 0:1
+// ah+ws tw+jp 1:0
+
+// 13.01.25
+// ah+jp ws+tw 1:0
+// tw+ah jp+ws 0:1
+// ah+ws tw+jp 1:0
+
+// 13.01.25
+// ws+ah jp+tw 1:0
+// ah+jp tw+ws 0:1
+// ah+tw ws+jp 1:0
+
+// 13.01.25
+// ah+jp ws+tw 0:1
+// tw+ah jp+ws 1:0
+// ws+ah tw+jp 1:0
+
+// 13.01.25
+// ah+jp tw+ws 0:1
+// ws+ah jp+tw 1:0
+// tw+ah jp+ws 0:1
+
+// 13.01.25
+// ah+ws jp+tw 0:1
+// tw+ah ws+jp 1:0
+// ah+jp tw+ws 0:1
+
+// 13.01.25
+// ah+tw ws+jp 0:1
+// jp+ah tw+ws 1:0
+// ah+ws jp+tw 0:1
+
+// 13.01.25
+// ws+ah jp+tw 1:0
+// ah+jp tw+ws 1:0
+// ah+tw ws+jp 0:1`;
+
 function App() {
   const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
   const [playerDStats, setPlayerDStats] = useState<PlayerStats[]>([]);
   const [playerOStats, setPlayerOStats] = useState<PlayerStats[]>([]);
   const [teamStatsOverall, setTeamStatsOverall] = useState<TeamStats[]>([]);
   const [teamStatsSpecific, setTeamStatsSpecific] = useState<TeamStats[]>([]);
-  const [matchStats, setMatchStats] = useState<MatchStats[]>([]);
+  const [matchStatsOverall, setMatchStatsOverall] = useState<MatchStats[]>([]);
+  const [matchStatsSpecific, setMatchStatsSpecific] = useState<MatchStats[]>([]);
   const [showTrends, setShowTrend] = useState<boolean>(false);
   const tooltipRef = useRef<TooltipRefProps>(null);
 
   useEffect(() => {
+    // const results = parseResults(sss);
+    // const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
+    // setPlayerStats(playerStats);
+    // setPlayerDStats(playerDStats);
+    // setPlayerOStats(playerOStats);
+    // setTeamStatsOverall(teamStatsOverall);
+    // setTeamStatsSpecific(teamStatsSpecific);
+    // setMatchStatsOverall(matchStatsOverall);
+    // setMatchStatsSpecific(matchStatsSpecific);
+
     fetch("https://api.github.com/gists/16fc9291f9b939835ade9494a75de5cb")
       .then(response => response.json())
       .then(data => data["files"]["llabsoof.txt"]["content"])
       .then(data => {
           const results = parseResults(data);
-          const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStats] = extractStats(results);
+          const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
           setPlayerStats(playerStats);
           setPlayerDStats(playerDStats);
           setPlayerOStats(playerOStats);
           setTeamStatsOverall(teamStatsOverall);
           setTeamStatsSpecific(teamStatsSpecific);
-          setMatchStats(matchStats);
+          setMatchStatsOverall(matchStatsOverall);
+          setMatchStatsSpecific(matchStatsSpecific);
         })
         .catch(error => console.error('Error fetching the text file:', error));
   }, []);
@@ -145,13 +208,14 @@ function App() {
     return players.map(player => (<span key={player} className={`px-1 ${getPlayerColor(player)}`}>{player}</span>));
   };
 
-  const extractStats = (results: Match[]): [PlayerStats[], PlayerStats[], PlayerStats[], TeamStats[], TeamStats[], MatchStats[]] => {
+  const extractStats = (results: Match[]): [PlayerStats[], PlayerStats[], PlayerStats[], TeamStats[], TeamStats[], MatchStats[], MatchStats[]] => {
     const playerStats: { [key: string]: PlayerStats } = {};
     const playerDStats: { [key: string]: PlayerStats } = {};
     const playerOStats: { [key: string]: PlayerStats } = {};
     const teamStatsOverall: { [key: string]: TeamStats } = {};
     const teamStatsSpecific: { [key: string]: TeamStats } = {};
-    const gamesStats: { [key: string]: MatchStats } = {};
+    const gamesStatsSpecific: { [key: string]: MatchStats } = {};
+    const gamesStatsOverall: { [key: string]: MatchStats } = {};
       
     const getPlayers = (team: string): string[] => team.split(' ');
       
@@ -189,9 +253,9 @@ function App() {
       }
     };
 
-    const initializeMatchStats = (match: string) => {
-      if (!gamesStats[match]) {
-        gamesStats[match] = {
+    const initializeMatchStats = (match: string, stats: { [key: string]: MatchStats }) => {
+      if (!stats[match]) {
+        stats[match] = {
           match,
           games: 0,
           wins: 0,
@@ -219,9 +283,10 @@ function App() {
       const player1O = team1Players[1];
       const player2D = team2Players[0];
       const player2O = team2Players[1];
-      const teams_overall = [team1Overall, team2Overall];
-      const teams_specific = [team_1, team_2];
-      const games = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];   
+      const teamsOverall = [team1Overall, team2Overall];
+      const teamsSpecific = [team_1, team_2];
+      const gamesSpecific = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];
+      const gamesOverall = [`${team1Overall} vs ${team2Overall}`, `${team2Overall} vs ${team1Overall}`];
 
       //
 
@@ -268,7 +333,7 @@ function App() {
 
       [player1D, player2D].forEach(player => initializePlayerStats(player, playerDStats));
       [player1D, player2D].forEach(player => playerDStats[player].games++);      
-      console.log([player1D, player2D]);
+
       if (score1 > score2) {
         playerDStats[player1D].wins++;
         playerDStats[player1D].results.unshift({ win: true, match });
@@ -301,7 +366,7 @@ function App() {
 
       [player1O, player2O].forEach(player => initializePlayerStats(player, playerOStats));
       [player1O, player2O].forEach(player => playerOStats[player].games++);      
-      console.log([player1O, player2O]);
+
       if (score1 > score2) {
         playerOStats[player1O].wins++;
         playerOStats[player1O].results.unshift({ win: true, match });
@@ -332,8 +397,8 @@ function App() {
 
       //
 
-      teams_overall.forEach(team => initializeTeamStats(team, teamStatsOverall));
-      teams_overall.forEach(team => teamStatsOverall[team].games++);
+      teamsOverall.forEach(team => initializeTeamStats(team, teamStatsOverall));
+      teamsOverall.forEach(team => teamStatsOverall[team].games++);
       
       if (score1 > score2) {
         teamStatsOverall[team1Overall].wins++;
@@ -369,8 +434,8 @@ function App() {
 
       //
 
-      teams_specific.forEach(team => initializeTeamStats(team, teamStatsSpecific));
-      teams_specific.forEach(team => teamStatsSpecific[team].games++);
+      teamsSpecific.forEach(team => initializeTeamStats(team, teamStatsSpecific));
+      teamsSpecific.forEach(team => teamStatsSpecific[team].games++);
       
       if (score1 > score2) {
         teamStatsSpecific[team_1].wins++;
@@ -407,45 +472,84 @@ function App() {
 
       //
 
-      games.forEach(initializeMatchStats);
-      games.forEach(game => gamesStats[game].games++);
-      const t1vst2 = games[0];
-      const t2vst1 = games[1];
+      gamesSpecific.forEach(game => initializeMatchStats(game, gamesStatsSpecific));
+      gamesSpecific.forEach(game => gamesStatsSpecific[game].games++);
+      const t1vst2 = gamesSpecific[0];
+      const t2vst1 = gamesSpecific[1];
       
       if (score1 > score2) {
-        gamesStats[t1vst2].wins++;
-        gamesStats[t2vst1].losses++;
+        gamesStatsSpecific[t1vst2].wins++;
+        gamesStatsSpecific[t2vst1].losses++;
 
-        gamesStats[t1vst2].results.unshift({ win: true, match });
-        gamesStats[t2vst1].results.unshift({ win: false, match });
+        gamesStatsSpecific[t1vst2].results.unshift({ win: true, match });
+        gamesStatsSpecific[t2vst1].results.unshift({ win: false, match });
 
-        gamesStats[t1vst2].curWinStreak++;
-        gamesStats[t1vst2].curLoseStreak = 0;
+        gamesStatsSpecific[t1vst2].curWinStreak++;
+        gamesStatsSpecific[t1vst2].curLoseStreak = 0;
 
-        gamesStats[t2vst1].curLoseStreak++;
-        gamesStats[t2vst1].curWinStreak = 0;
+        gamesStatsSpecific[t2vst1].curLoseStreak++;
+        gamesStatsSpecific[t2vst1].curWinStreak = 0;
       } else if (score2 > score1) {
-        gamesStats[t2vst1].wins++;
-        gamesStats[t1vst2].losses++;
+        gamesStatsSpecific[t2vst1].wins++;
+        gamesStatsSpecific[t1vst2].losses++;
 
-        gamesStats[t2vst1].results.unshift({ win: true, match });
-        gamesStats[t1vst2].results.unshift({ win: false, match });
+        gamesStatsSpecific[t2vst1].results.unshift({ win: true, match });
+        gamesStatsSpecific[t1vst2].results.unshift({ win: false, match });
 
-        gamesStats[t2vst1].curWinStreak++;
-        gamesStats[t2vst1].curLoseStreak = 0;
+        gamesStatsSpecific[t2vst1].curWinStreak++;
+        gamesStatsSpecific[t2vst1].curLoseStreak = 0;
 
-        gamesStats[t1vst2].curLoseStreak++;
-        gamesStats[t1vst2].curWinStreak = 0;
+        gamesStatsSpecific[t1vst2].curLoseStreak++;
+        gamesStatsSpecific[t1vst2].curWinStreak = 0;
       }
 
-      Object.values(gamesStats).forEach(stats => {
+      Object.values(gamesStatsSpecific).forEach(stats => {
+        stats.winRate = (stats.wins / stats.games) * 100;
+        stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
+        stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
+      });
+
+      //
+
+      gamesOverall.forEach(game => initializeMatchStats(game, gamesStatsOverall));
+      gamesOverall.forEach(game => gamesStatsOverall[game].games++);
+      const t1vst2Overall = gamesOverall[0];
+      const t2vst1Overall= gamesOverall[1];
+      
+      if (score1 > score2) {
+        gamesStatsOverall[t1vst2Overall].wins++;
+        gamesStatsOverall[t2vst1Overall].losses++;
+
+        gamesStatsOverall[t1vst2Overall].results.unshift({ win: true, match });
+        gamesStatsOverall[t2vst1Overall].results.unshift({ win: false, match });
+
+        gamesStatsOverall[t1vst2Overall].curWinStreak++;
+        gamesStatsOverall[t1vst2Overall].curLoseStreak = 0;
+
+        gamesStatsOverall[t2vst1Overall].curLoseStreak++;
+        gamesStatsOverall[t2vst1Overall].curWinStreak = 0;
+      } else if (score2 > score1) {
+        gamesStatsOverall[t2vst1Overall].wins++;
+        gamesStatsOverall[t1vst2Overall].losses++;
+
+        gamesStatsOverall[t2vst1Overall].results.unshift({ win: true, match });
+        gamesStatsOverall[t1vst2Overall].results.unshift({ win: false, match });
+
+        gamesStatsOverall[t2vst1Overall].curWinStreak++;
+        gamesStatsOverall[t2vst1Overall].curLoseStreak = 0;
+
+        gamesStatsOverall[t1vst2Overall].curLoseStreak++;
+        gamesStatsOverall[t1vst2Overall].curWinStreak = 0;
+      }
+
+      Object.values(gamesStatsOverall).forEach(stats => {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
       });
     });   
       
-    return [Object.values(playerStats), Object.values(playerDStats), Object.values(playerOStats), Object.values(teamStatsOverall), Object.values(teamStatsSpecific), Object.values(gamesStats)];
+    return [Object.values(playerStats), Object.values(playerDStats), Object.values(playerOStats), Object.values(teamStatsOverall), Object.values(teamStatsSpecific), Object.values(gamesStatsOverall), Object.values(gamesStatsSpecific)];
   };
 
   const SortableTable = <T extends Stats>({ data, title }: SortableTableProps<T>) => {
@@ -498,7 +602,7 @@ function App() {
         case 'loseStreak':
           return 'L. Streak';
         case 'results':
-            return 'Recent Games';
+            return 'Results';
         default:
           return key.charAt(0).toUpperCase() + key.slice(1);
       }
@@ -604,7 +708,7 @@ function App() {
         onClick={() => setShowTrend(!showTrends)} 
         className="flex items-center text-gray-50">
         {showTrends ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
-        <span className="ml-2 text-amber-400">{showTrends ? 'Recent Games' : 'Recent Games'}</span>
+        <span className="ml-2 text-amber-400">{showTrends ? 'Show results' : 'Show results'}</span>
       </button>
     </div>
 
@@ -629,15 +733,19 @@ function App() {
         title="Team Statistics (Defence Offence)" />
 
       <SortableTable<MatchStats>
-        data={matchStats}
-        title="Match Statistics" />
+        data={matchStatsOverall}
+        title="Match Statistics (Overall)" />
+
+      <SortableTable<MatchStats>
+        data={matchStatsSpecific}
+        title="Match Statistics (Defence Offence)" />
 
       <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
 
         if (!content) {
           return null;
         }
-        
+
         const parts = content?.split('|')!;
         const date = parts[0];
         const teams = parts[1];
