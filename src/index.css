@@ -13,7 +13,7 @@
 
 :root {
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;  
+  line-height: 1.5;
   color: white;
   background-color: var(--color-slate-700);
   font-synthesis: none;

@@ -15,34 +15,8 @@ interface Result {
   match: Match;
 }
 
-interface PlayerStats {
-  player: string;
-  games: number;
-  wins: number;  
-  losses: number;
-  curWinStreak: number;
-  curLoseStreak: number;
-  winStreak: number;
-  loseStreak: number;
-  winRate: number;
-  results: Result[];
-}
-
-interface TeamStats {
-  team: string;
-  games: number;
-  wins: number;  
-  losses: number;
-  curWinStreak: number;
-  curLoseStreak: number;
-  winStreak: number;
-  loseStreak: number;
-  winRate: number;
-  results: Result[];
-}
-
-interface MatchStats {
-  match: string;
+interface Stats {
+  playerOrTeam: string;
   games: number;
   wins: number;
   losses: number;
@@ -54,77 +28,60 @@ interface MatchStats {
   results: Result[];
 }
 
-type Stats = PlayerStats | TeamStats | MatchStats;
-
 interface SortableTableProps<T extends Stats> {
   data: T[];
   title: string;
 }
 
-// const sss = `
+// const testData = `
 // 13.01.25
 // ah+ws jp+tw 0:1
 // tw+ah ws+jp 0:1
 // ah+jp tw+ws 1:0
 
-// 13.01.25
+// 14.01.25
 // ws+ah jp+tw 1:0
 // ah+jp tw+ws 1:0
 // tw+ah ws+jp 1:0
 
-// 13.01.25
+// 15.01.25
 // ah+jp ws+tw 0:1
 // tw+ah jp+ws 0:1
 // ah+ws tw+jp 1:0
 
-// 13.01.25
+// 16.01.25
 // ah+jp ws+tw 1:0
 // tw+ah jp+ws 0:1
 // ah+ws tw+jp 1:0
 
-// 13.01.25
+// 17.01.25
 // ws+ah jp+tw 1:0
 // ah+jp tw+ws 0:1
 // ah+tw ws+jp 1:0
 
-// 13.01.25
+// 18.01.25
 // ah+jp ws+tw 0:1
 // tw+ah jp+ws 1:0
 // ws+ah tw+jp 1:0
 
-// 13.01.25
+// 19.01.25
 // ah+jp tw+ws 0:1
 // ws+ah jp+tw 1:0
-// tw+ah jp+ws 0:1
-
-// 13.01.25
-// ah+ws jp+tw 0:1
-// tw+ah ws+jp 1:0
-// ah+jp tw+ws 0:1
-
-// 13.01.25
-// ah+tw ws+jp 0:1
-// jp+ah tw+ws 1:0
-// ah+ws jp+tw 0:1
-
-// 13.01.25
-// ws+ah jp+tw 1:0
-// ah+jp tw+ws 1:0
-// ah+tw ws+jp 0:1`;
+// tw+ah jp+ws 0:1`;
 
 function App() {
-  const [playerStats, setPlayerStats] = useState<PlayerStats[]>([]);
-  const [playerDStats, setPlayerDStats] = useState<PlayerStats[]>([]);
-  const [playerOStats, setPlayerOStats] = useState<PlayerStats[]>([]);
-  const [teamStatsOverall, setTeamStatsOverall] = useState<TeamStats[]>([]);
-  const [teamStatsSpecific, setTeamStatsSpecific] = useState<TeamStats[]>([]);
-  const [matchStatsOverall, setMatchStatsOverall] = useState<MatchStats[]>([]);
-  const [matchStatsSpecific, setMatchStatsSpecific] = useState<MatchStats[]>([]);
+  const [playerStats, setPlayerStats] = useState<Stats[]>([]);
+  const [playerDStats, setPlayerDStats] = useState<Stats[]>([]);
+  const [playerOStats, setPlayerOStats] = useState<Stats[]>([]);
+  const [teamStatsOverall, setTeamStatsOverall] = useState<Stats[]>([]);
+  const [teamStatsSpecific, setTeamStatsSpecific] = useState<Stats[]>([]);
+  const [matchStatsOverall, setMatchStatsOverall] = useState<Stats[]>([]);
+  const [matchStatsSpecific, setMatchStatsSpecific] = useState<Stats[]>([]);
   const [showTrends, setShowTrend] = useState<boolean>(false);
   const tooltipRef = useRef<TooltipRefProps>(null);
 
   useEffect(() => {
-    // const results = parseResults(sss);
+    // const results = parseResults(testData);
     // const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
     // setPlayerStats(playerStats);
     // setPlayerDStats(playerDStats);
@@ -138,17 +95,17 @@ function App() {
       .then(response => response.json())
       .then(data => data["files"]["llabsoof.txt"]["content"])
       .then(data => {
-          const results = parseResults(data);
-          const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
-          setPlayerStats(playerStats);
-          setPlayerDStats(playerDStats);
-          setPlayerOStats(playerOStats);
-          setTeamStatsOverall(teamStatsOverall);
-          setTeamStatsSpecific(teamStatsSpecific);
-          setMatchStatsOverall(matchStatsOverall);
-          setMatchStatsSpecific(matchStatsSpecific);
-        })
-        .catch(error => console.error('Error fetching the text file:', error));
+        const results = parseResults(data);
+        const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
+        setPlayerStats(playerStats);
+        setPlayerDStats(playerDStats);
+        setPlayerOStats(playerOStats);
+        setTeamStatsOverall(teamStatsOverall);
+        setTeamStatsSpecific(teamStatsSpecific);
+        setMatchStatsOverall(matchStatsOverall);
+        setMatchStatsSpecific(matchStatsSpecific);
+      })
+      .catch(error => console.error('Error fetching the text file:', error));
   }, []);
 
   function parseResults(results: string): Match[] {
@@ -174,18 +131,18 @@ function App() {
           team_1: parts[0].replace('+', ' ').toUpperCase(),
           team_2: parts[1].replace('+', ' ').toUpperCase(),
           date: date,
-          score:[+scoreParts[0], +scoreParts[1]]
+          score: [+scoreParts[0], +scoreParts[1]]
         });
       }
     }
 
     return matches;
-  } 
+  }
 
   const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
-    
+
   const getPlayerColor = (player: string) => {
-    switch(player) {
+    switch (player) {
       case 'AH':
         return 'text-rose-400';
       case 'WS':
@@ -208,21 +165,21 @@ function App() {
     return players.map(player => (<span key={player} className={`px-1 ${getPlayerColor(player)}`}>{player}</span>));
   };
 
-  const extractStats = (results: Match[]): [PlayerStats[], PlayerStats[], PlayerStats[], TeamStats[], TeamStats[], MatchStats[], MatchStats[]] => {
-    const playerStats: { [key: string]: PlayerStats } = {};
-    const playerDStats: { [key: string]: PlayerStats } = {};
-    const playerOStats: { [key: string]: PlayerStats } = {};
-    const teamStatsOverall: { [key: string]: TeamStats } = {};
-    const teamStatsSpecific: { [key: string]: TeamStats } = {};
-    const gamesStatsSpecific: { [key: string]: MatchStats } = {};
-    const gamesStatsOverall: { [key: string]: MatchStats } = {};
-      
+  const extractStats = (results: Match[]): [Stats[], Stats[], Stats[], Stats[], Stats[], Stats[], Stats[]] => {
+    const playerStats: { [key: string]: Stats } = {};
+    const playerDStats: { [key: string]: Stats } = {};
+    const playerOStats: { [key: string]: Stats } = {};
+    const teamStatsOverall: { [key: string]: Stats } = {};
+    const teamStatsSpecific: { [key: string]: Stats } = {};
+    const gamesStatsSpecific: { [key: string]: Stats } = {};
+    const gamesStatsOverall: { [key: string]: Stats } = {};
+
     const getPlayers = (team: string): string[] => team.split(' ');
-      
-    const initializePlayerStats = (player: string, stats: { [key: string]: PlayerStats }) => {
-      if (!stats[player]) {
-        stats[player] = {
-          player,
+
+    const initializeStats = (playerOrTeam: string, stats: { [key: string]: Stats }) => {
+      if (!stats[playerOrTeam]) {
+        stats[playerOrTeam] = {
+          playerOrTeam,
           games: 0,
           wins: 0,
           losses: 0,
@@ -236,44 +193,10 @@ function App() {
       }
     };
 
-    const initializeTeamStats = (team: string, stats: { [key: string]: TeamStats }) => {
-      if (!stats[team]) {
-        stats[team] = {
-          team,
-          games: 0,
-          wins: 0,
-          losses: 0,
-          curLoseStreak: 0,
-          curWinStreak: 0,
-          winStreak: 0,
-          loseStreak: 0,
-          winRate: 0,
-          results: []
-        };
-      }
-    };
-
-    const initializeMatchStats = (match: string, stats: { [key: string]: MatchStats }) => {
-      if (!stats[match]) {
-        stats[match] = {
-          match,
-          games: 0,
-          wins: 0,
-          losses: 0,
-          curLoseStreak: 0,
-          curWinStreak: 0,
-          winStreak: 0,
-          loseStreak: 0,
-          winRate: 0,
-          results: []
-        };
-      }
-    };
-      
     results.forEach(match => {
       const { team_1, team_2, score } = match;
       const [score1, score2] = score;
-        
+
       const team1Players = getPlayers(team_1);
       const team2Players = getPlayers(team_2);
       const team1Overall = [...team1Players].sort().join(' ');
@@ -290,11 +213,11 @@ function App() {
 
       //
 
-      players.forEach(player => initializePlayerStats(player, playerStats));
-      players.forEach(player => playerStats[player].games++);      
-      
+      players.forEach(player => initializeStats(player, playerStats));
+      players.forEach(player => playerStats[player].games++);
+
       if (score1 > score2) {
-        team1Players.forEach(player =>  {
+        team1Players.forEach(player => {
           playerStats[player].wins++;
           playerStats[player].results.unshift({ win: true, match });
           playerStats[player].curWinStreak++;
@@ -331,8 +254,8 @@ function App() {
 
       //
 
-      [player1D, player2D].forEach(player => initializePlayerStats(player, playerDStats));
-      [player1D, player2D].forEach(player => playerDStats[player].games++);      
+      [player1D, player2D].forEach(player => initializeStats(player, playerDStats));
+      [player1D, player2D].forEach(player => playerDStats[player].games++);
 
       if (score1 > score2) {
         playerDStats[player1D].wins++;
@@ -364,8 +287,8 @@ function App() {
 
       //
 
-      [player1O, player2O].forEach(player => initializePlayerStats(player, playerOStats));
-      [player1O, player2O].forEach(player => playerOStats[player].games++);      
+      [player1O, player2O].forEach(player => initializeStats(player, playerOStats));
+      [player1O, player2O].forEach(player => playerOStats[player].games++);
 
       if (score1 > score2) {
         playerOStats[player1O].wins++;
@@ -374,7 +297,7 @@ function App() {
         playerOStats[player1O].curLoseStreak = 0;
 
         playerOStats[player2O].losses++;
-        playerOStats[player2O].results.unshift({ win: false, match});
+        playerOStats[player2O].results.unshift({ win: false, match });
         playerOStats[player2O].curLoseStreak++;
         playerOStats[player2O].curWinStreak = 0;
       } else if (score2 > score1) {
@@ -397,9 +320,9 @@ function App() {
 
       //
 
-      teamsOverall.forEach(team => initializeTeamStats(team, teamStatsOverall));
+      teamsOverall.forEach(team => initializeStats(team, teamStatsOverall));
       teamsOverall.forEach(team => teamStatsOverall[team].games++);
-      
+
       if (score1 > score2) {
         teamStatsOverall[team1Overall].wins++;
         teamStatsOverall[team2Overall].losses++;
@@ -417,7 +340,7 @@ function App() {
         teamStatsOverall[team1Overall].losses++;
 
         teamStatsOverall[team2Overall].results.unshift({ win: true, match });
-        teamStatsOverall[team1Overall].results.unshift({ win: false, match});
+        teamStatsOverall[team1Overall].results.unshift({ win: false, match });
 
         teamStatsOverall[team2Overall].curWinStreak++;
         teamStatsOverall[team2Overall].curLoseStreak = 0;
@@ -425,7 +348,7 @@ function App() {
         teamStatsOverall[team1Overall].curLoseStreak++;
         teamStatsOverall[team1Overall].curWinStreak = 0;
       }
-      
+
       Object.values(teamStatsOverall).forEach(stats => {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
@@ -434,9 +357,9 @@ function App() {
 
       //
 
-      teamsSpecific.forEach(team => initializeTeamStats(team, teamStatsSpecific));
+      teamsSpecific.forEach(team => initializeStats(team, teamStatsSpecific));
       teamsSpecific.forEach(team => teamStatsSpecific[team].games++);
-      
+
       if (score1 > score2) {
         teamStatsSpecific[team_1].wins++;
         teamStatsSpecific[team_2].losses++;
@@ -463,7 +386,7 @@ function App() {
         teamStatsSpecific[team_1].curLoseStreak++;
         teamStatsSpecific[team_1].curWinStreak = 0;
       }
-      
+
       Object.values(teamStatsSpecific).forEach(stats => {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
@@ -472,11 +395,11 @@ function App() {
 
       //
 
-      gamesSpecific.forEach(game => initializeMatchStats(game, gamesStatsSpecific));
+      gamesSpecific.forEach(game => initializeStats(game, gamesStatsSpecific));
       gamesSpecific.forEach(game => gamesStatsSpecific[game].games++);
       const t1vst2 = gamesSpecific[0];
       const t2vst1 = gamesSpecific[1];
-      
+
       if (score1 > score2) {
         gamesStatsSpecific[t1vst2].wins++;
         gamesStatsSpecific[t2vst1].losses++;
@@ -511,11 +434,11 @@ function App() {
 
       //
 
-      gamesOverall.forEach(game => initializeMatchStats(game, gamesStatsOverall));
+      gamesOverall.forEach(game => initializeStats(game, gamesStatsOverall));
       gamesOverall.forEach(game => gamesStatsOverall[game].games++);
       const t1vst2Overall = gamesOverall[0];
-      const t2vst1Overall= gamesOverall[1];
-      
+      const t2vst1Overall = gamesOverall[1];
+
       if (score1 > score2) {
         gamesStatsOverall[t1vst2Overall].wins++;
         gamesStatsOverall[t2vst1Overall].losses++;
@@ -547,15 +470,22 @@ function App() {
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
       });
-    });   
-      
-    return [Object.values(playerStats), Object.values(playerDStats), Object.values(playerOStats), Object.values(teamStatsOverall), Object.values(teamStatsSpecific), Object.values(gamesStatsOverall), Object.values(gamesStatsSpecific)];
+    });
+
+    return [
+      Object.values(playerStats),
+      Object.values(playerDStats),
+      Object.values(playerOStats),
+      Object.values(teamStatsOverall),
+      Object.values(teamStatsSpecific),
+      Object.values(gamesStatsOverall),
+      Object.values(gamesStatsSpecific)];
   };
 
   const SortableTable = <T extends Stats>({ data, title }: SortableTableProps<T>) => {
     const [sortField, setSortField] = useState<keyof T>('winRate');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
-  
+
     const handleSort = (field: keyof T) => {
       if (sortField === field) {
         setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
@@ -564,33 +494,33 @@ function App() {
         setSortDirection('desc');
       }
     };
-  
+
     const sortedData = [...data].sort((a, b) => {
       const aValue = a[sortField];
       const bValue = b[sortField];
-      
+
       if (typeof aValue === 'number' && typeof bValue === 'number') {
         return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
       }
-      
+
       if (typeof aValue === 'string' && typeof bValue === 'string') {
-        return sortDirection === 'asc' 
+        return sortDirection === 'asc'
           ? aValue.localeCompare(bValue)
           : bValue.localeCompare(aValue);
       }
-      
+
       return 0;
     });
-  
+
     const renderSortIcon = (field: keyof T) => {
       if (sortField !== field) return null;
-      return sortDirection === 'asc' ? 
-        <ChevronUp className="inline w-4 h-4" /> : 
+      return sortDirection === 'asc' ?
+        <ChevronUp className="inline w-4 h-4" /> :
         <ChevronDown className="inline w-4 h-4" />;
     };
-  
+
     const getHeaderName = (key: string) => {
-      switch(key) {
+      switch (key) {
         case 'player':
         case 'team':
         case 'match':
@@ -602,7 +532,7 @@ function App() {
         case 'loseStreak':
           return 'L. Streak';
         case 'results':
-            return 'Results';
+          return 'Results';
         default:
           return key.charAt(0).toUpperCase() + key.slice(1);
       }
@@ -615,15 +545,14 @@ function App() {
           <p className="text-gray-50">No data available</p>
         </div>
       );
-    }  
+    }
 
     const handleScroll = (e: React.MouseEvent<HTMLDivElement>) => {
-      
       tooltipRef.current?.close();
 
       const div = e.currentTarget;
       const startX = e.pageX - div.offsetLeft;
-      const scrollLeft = div.scrollLeft;     
+      const scrollLeft = div.scrollLeft;
 
       const onMouseMove = (e: MouseEvent) => {
         const x = e.pageX - div.offsetLeft;
@@ -635,12 +564,20 @@ function App() {
 
       const onMouseUp = () => {
         window.removeEventListener('mousemove', onMouseMove);
-        window.removeEventListener('mouseup', onMouseUp);        
+        window.removeEventListener('mouseup', onMouseUp);
       };
 
       window.addEventListener('mousemove', onMouseMove);
       window.addEventListener('mouseup', onMouseUp);
     };
+
+    const getTooltipData = (stats: Stats, result: Result) => {
+      const players = stats.playerOrTeam.split(' ').map(player => player.trim());
+      const match = players.some(p => result.match.team_1.includes(p))
+        ? `${result.match.team_1} vs ${result.match.team_2}`
+        : `${result.match.team_2} vs ${result.match.team_1}`;
+      return `${result.match.date}|${match}`;
+    }
 
     return (
       <div className="w-full max-w-5xl mb-8">
@@ -650,12 +587,12 @@ function App() {
             <thead className="bg-slate-800">
               <tr>
                 {Object.keys(data[0]).filter(key => key !== 'curWinStreak' && key !== 'curLoseStreak').map((key) => (
-                    <th
+                  <th
                     key={key}
                     className={`px-2 py-3 text-sm font-semibold text-gray-50 text-center uppercase tracking-wider cursor-pointer ${trendMode(key) ? 'hidden' : ''} sm:table-cell`}
                     onClick={() => handleSort(key as keyof T)}>
                     {getHeaderName(key)} {renderSortIcon(key as keyof T)}
-                    </th>
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -665,28 +602,26 @@ function App() {
                   {Object.entries(item).filter(([key]) => key !== 'curWinStreak' && key !== 'curLoseStreak').map(([key, value]) => (
                     <td key={key} className={`px-2 py-3 text-sm text-gray-50 text-center relative ${trendMode(key) ? 'hidden' : ''} ${key === 'results' ? 'w-[180px] md:w-[300px] text-right' : ''} sm:table-cell whitespace-nowrap`}>
                       {(() => {
-                      switch (key) {
-                        case 'player':
-                        case 'team':
-                        case 'match':
-                          return stylePlayers(value);
-                        case 'results':
+                        switch (key) {
+                          case 'playerOrTeam':
+                            return stylePlayers(value);
+                          case 'results':
                             return (
                               <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }} onMouseDown={handleScroll}>
-                              {(value as Result[]).map((result, idx) => (
-                                <span key={idx} className="cursor-default" data-tooltip-id="my-tooltip" data-tooltip-content={`${result.match.date}|${result.match.team_1} vs ${result.match.team_2}`}>
-                                  {result.win
-                                  ? <CircleCheck className="inline w-4 h-4 text-green-300 mx-0.5"/> 
-                                  : <CircleX className="inline w-4 h-4 text-red-400 mx-0.5" />}                                  
-                                </span>                                
-                              ))}
+                                {(value as Result[]).map((result, idx) => (
+                                  <span key={idx} className="cursor-default" data-tooltip-id="my-tooltip" data-tooltip-content={getTooltipData(item, result)}>
+                                    {result.win
+                                      ? <CircleCheck className="inline w-4 h-4 text-green-300 mx-0.5" />
+                                      : <CircleX className="inline w-4 h-4 text-red-400 mx-0.5" />}
+                                  </span>
+                                ))}
                               </div>
                             );
-                        case 'winRate':
-                          return `${(value as number).toFixed(1)}%`;
-                        default:
-                          return value;
-                      }
+                          case 'winRate':
+                            return `${(value as number).toFixed(1)}%`;
+                          default:
+                            return value;
+                        }
                       })()}
                     </td>
                   ))}
@@ -700,43 +635,43 @@ function App() {
   };
 
   return (
-    
-    <div className="p-6 space-y-8">
-        
-    <div className="flex justify-between items-center mb-4 sm:hidden">      
-      <button 
-        onClick={() => setShowTrend(!showTrends)} 
-        className="flex items-center text-gray-50">
-        {showTrends ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
-        <span className="ml-2 text-amber-400">{showTrends ? 'Show results' : 'Show results'}</span>
-      </button>
-    </div>
 
-      <SortableTable<PlayerStats> 
-        data={playerStats} 
+    <div className="p-6 space-y-8">
+
+      <div className="flex justify-between items-center mb-4 sm:hidden">
+        <button
+          onClick={() => setShowTrend(!showTrends)}
+          className="flex items-center text-gray-50">
+          {showTrends ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
+          <span className="ml-2 text-amber-400">{showTrends ? 'Show results' : 'Show results'}</span>
+        </button>
+      </div>
+
+      <SortableTable<Stats>
+        data={playerStats}
         title="Player Statistics" />
 
-      <SortableTable<PlayerStats>
+      <SortableTable<Stats>
         data={playerDStats}
         title="Player Statistics (Defence)" />
-        
-      <SortableTable<PlayerStats>
+
+      <SortableTable<Stats>
         data={playerOStats}
         title="Player Statistics (Offence)" />
 
-      <SortableTable<TeamStats>
+      <SortableTable<Stats>
         data={teamStatsOverall}
         title="Team Statistics (Overall)" />
 
-      <SortableTable<TeamStats>
+      <SortableTable<Stats>
         data={teamStatsSpecific}
         title="Team Statistics (Defence Offence)" />
 
-      <SortableTable<MatchStats>
+      <SortableTable<Stats>
         data={matchStatsOverall}
         title="Match Statistics (Overall)" />
 
-      <SortableTable<MatchStats>
+      <SortableTable<Stats>
         data={matchStatsSpecific}
         title="Match Statistics (Defence Offence)" />
 
@@ -752,8 +687,8 @@ function App() {
         return (<div>
           <div className="text-gray-200 text-center">{date}</div>
           {stylePlayers(teams)}
-          </div>);
-      }}/>
+        </div>);
+      }} />
     </div>
   );
 }
