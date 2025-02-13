@@ -31,6 +31,7 @@ interface Stats {
 interface SortableTableProps<T extends Stats> {
   data: T[];
   title: string;
+  statsFor: string;
 }
 
 // const testData = `
@@ -482,7 +483,7 @@ function App() {
       Object.values(gamesStatsSpecific)];
   };
 
-  const SortableTable = <T extends Stats>({ data, title }: SortableTableProps<T>) => {
+  const SortableTable = <T extends Stats>({ data, title, statsFor }: SortableTableProps<T>) => {
     const [sortField, setSortField] = useState<keyof T>('winRate');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
@@ -521,10 +522,8 @@ function App() {
 
     const getHeaderName = (key: string) => {
       switch (key) {
-        case 'player':
-        case 'team':
-        case 'match':
-          return key.charAt(0).toUpperCase() + key.slice(1);
+        case 'playerOrTeam':
+          return statsFor;
         case 'winRate':
           return 'Win Rate';
         case 'winStreak':
@@ -572,7 +571,9 @@ function App() {
     };
 
     const getTooltipData = (stats: Stats, result: Result) => {
-      const players = stats.playerOrTeam.split(' ').map(player => player.trim());
+      let players = stats.playerOrTeam.split(' ').map(player => player.trim());
+      players = players.slice(0, players.length / 2 + 1);
+
       const match = players.some(p => result.match.team_1.includes(p))
         ? `${result.match.team_1} vs ${result.match.team_2}`
         : `${result.match.team_2} vs ${result.match.team_1}`;
@@ -649,31 +650,38 @@ function App() {
 
       <SortableTable<Stats>
         data={playerStats}
-        title="Player Statistics" />
+        title="Player Statistics"
+        statsFor="Player" />
 
       <SortableTable<Stats>
         data={playerDStats}
-        title="Player Statistics (Defence)" />
+        title="Player Statistics (Defence)"
+        statsFor="Player" />
 
       <SortableTable<Stats>
         data={playerOStats}
-        title="Player Statistics (Offence)" />
+        title="Player Statistics (Offence)"
+        statsFor="Player" />
 
       <SortableTable<Stats>
         data={teamStatsOverall}
-        title="Team Statistics (Overall)" />
+        title="Team Statistics (Overall)"
+        statsFor="Team" />
 
       <SortableTable<Stats>
         data={teamStatsSpecific}
-        title="Team Statistics (Defence Offence)" />
+        title="Team Statistics (Defence Offence)"
+        statsFor="Team" />
 
       <SortableTable<Stats>
         data={matchStatsOverall}
-        title="Match Statistics (Overall)" />
+        title="Match Statistics (Overall)"
+        statsFor="Match" />
 
       <SortableTable<Stats>
         data={matchStatsSpecific}
-        title="Match Statistics (Defence Offence)" />
+        title="Match Statistics (Defence Offence)"
+        statsFor="Match" />
 
       <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
 
