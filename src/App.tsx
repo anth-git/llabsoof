@@ -68,7 +68,18 @@ interface SortableTableProps<T extends Stats> {
 // 19.01.25
 // ah+jp tw+ws 0:1
 // ws+ah jp+tw 1:0
-// tw+ah jp+ws 0:1`;
+// tw+ah jp+ws 0:1
+
+// 20.01.25
+// ah+jp sg+ws 0:1
+// ws+ah jp+sg 1:0
+// sg+ah jp+ws 0:1
+
+// 20.02.25
+// sk+ah jp+mr 0:1
+// ah+jp mr+sk 1:0
+// ah+mr sk+jp 1:0
+// `;
 
 function App() {
   const [playerStats, setPlayerStats] = useState<Stats[]>([]);
@@ -79,6 +90,7 @@ function App() {
   const [matchStatsOverall, setMatchStatsOverall] = useState<Stats[]>([]);
   const [matchStatsSpecific, setMatchStatsSpecific] = useState<Stats[]>([]);
   const [showTrends, setShowTrend] = useState<boolean>(false);
+  const [showAllPlayers, setShowAllPlayers] = useState<boolean>(false);
   const tooltipRef = useRef<TooltipRefProps>(null);
 
   useEffect(() => {
@@ -107,7 +119,7 @@ function App() {
         setMatchStatsSpecific(matchStatsSpecific);
       })
       .catch(error => console.error('Error fetching the text file:', error));
-  }, []);
+  }, [showAllPlayers]);
 
   function parseResults(results: string): Match[] {
     const lines = results.split('\n');
@@ -124,8 +136,7 @@ function App() {
 
       if (parts.length === 1) {
         date = parts[0];
-      }
-      else if (parts.length === 3) {
+      } else if (parts.length === 3) {
         const scoreParts = parts[2].split(':');
 
         matches.push({
@@ -140,7 +151,7 @@ function App() {
     return matches;
   }
 
-  const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'player', 'team', 'match'].includes(key) && showTrends);
+  const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'playerOrTeam'].includes(key) && showTrends);
 
   const getPlayerColor = (player: string) => {
     switch (player) {
@@ -153,7 +164,7 @@ function App() {
       case 'TW':
         return 'text-lime-400';
       default:
-        return 'text-gray-50';
+        return 'text-indigo-300';
     }
   }
 
@@ -211,6 +222,13 @@ function App() {
       const teamsSpecific = [team_1, team_2];
       const gamesSpecific = [`${team_1} vs ${team_2}`, `${team_2} vs ${team_1}`];
       const gamesOverall = [`${team1Overall} vs ${team2Overall}`, `${team2Overall} vs ${team1Overall}`];
+
+      if (!showAllPlayers) {
+        const corePlayers = ['AH', 'WS', 'JP', 'TW'];
+        if (players.some(player => !corePlayers.includes(player))) {
+          return;
+        }
+      }
 
       //
 
@@ -635,18 +653,24 @@ function App() {
     );
   };
 
+  const Toggle = ({ title, className, value, callback }: { title: string, value: boolean, className?: string, callback: (newVal: boolean) => void }) => {
+    return (<div className={`flex justify-between items-center mb-4 ${className}`}>
+      <button
+        onClick={() => callback(!value)}
+        className="flex items-center text-gray-50">
+        {value ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
+        <span className={`ml-2 ${value ? 'text-green-300' : 'text-amber-400'}`}>{title}</span>
+      </button>
+    </div>);
+  }
+
   return (
 
     <div className="p-6 space-y-8">
 
-      <div className="flex justify-between items-center mb-4 sm:hidden">
-        <button
-          onClick={() => setShowTrend(!showTrends)}
-          className="flex items-center text-gray-50">
-          {showTrends ? <ToggleRight className="w-6 h-6 text-green-300" /> : <ToggleLeft className="w-6 h-6 text-amber-400" />}
-          <span className="ml-2 text-amber-400">{showTrends ? 'Show results' : 'Show results'}</span>
-        </button>
-      </div>
+      <Toggle title='Show trends' value={showTrends} className='sm:hidden' callback={(newVal) => setShowTrend(newVal)} />
+
+      <Toggle title='Show all players' value={showAllPlayers} callback={(newVal) => setShowAllPlayers(newVal)} />
 
       <SortableTable<Stats>
         data={playerStats}
