@@ -163,6 +163,8 @@ function App() {
         return 'text-yellow-400';
       case 'TW':
         return 'text-lime-400';
+      case 'vs':
+        return 'text-gray-50';
       default:
         return 'text-indigo-300';
     }
@@ -726,3 +728,17 @@ function App() {
 }
 
 export default App
+
+
+
+
+// Alternative Ideas:
+// Weighted Win Rate (more weight on recent games) to reflect momentum more accurately.
+// Elo Rating or Glicko-2 if you want a more advanced ranking system.
+// Performance Index (e.g., factoring in score differences, difficulty of opponents).
+// Naming the Chart:
+// "Current Form – Last 10 Games" (straightforward)
+// "Recent Win Rate" (if win rate is the only metric)
+// "Performance Trend" (if adding other factors)
+// "Momentum Tracker" (if focusing on streaks)
+// "Player Streak Chart" (if emphasizing streaks over win rate)
