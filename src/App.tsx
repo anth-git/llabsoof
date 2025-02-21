@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState } from 'react'
 import { ChevronUp, ChevronDown, CircleCheck, CircleX, ToggleLeft, ToggleRight } from 'lucide-react';
 import { Tooltip, TooltipRefProps } from 'react-tooltip'
 import './App.css'
+import { LineChart } from '@mui/x-charts/LineChart';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { LineSeriesType } from '@mui/x-charts';
+import { MakeOptional } from '@mui/x-charts/internals';
 
 interface Match {
   team_1: string;
@@ -13,6 +17,19 @@ interface Match {
 interface Result {
   win: boolean;
   match: Match;
+}
+
+interface TrendPoint {
+  date: string;
+  game: number;
+  [key: string]: number | string;
+};
+
+interface Trends {
+  playerTrend: TrendPoint[];
+  playerOffenceTrend: TrendPoint[];
+  playerDefenceTrend: TrendPoint[];
+  players: string[];
 }
 
 interface Stats {
@@ -28,52 +45,86 @@ interface Stats {
   results: Result[];
 }
 
+interface PlayersColors {
+  [key: string]: PlayerColor;
+}
+
+interface PlayerColor {
+  tailwind: string;
+  color: string;
+}
+
 interface SortableTableProps<T extends Stats> {
   data: T[];
   title: string;
   statsFor: string;
 }
 
+const playersColors: PlayersColors = {
+  'AH': { tailwind: 'text-rose-400', color: 'oklch(0.712 0.194 13.428)' },
+  'WS': { tailwind: 'text-cyan-400', color: 'oklch(0.789 0.154 211.53)' },
+  'JP': { tailwind: 'text-yellow-400', color: 'oklch(0.852 0.199 91.936)' },
+  'TW': { tailwind: 'text-lime-400', color: 'oklch(0.841 0.238 128.85)' },
+  'others': { tailwind: 'text-indigo-300', color: 'oklch(0.785 0.115 274.713)' },
+  'vs': { tailwind: 'text-gray-50', color: 'oklch(0.5 0.5 0)' },
+}
+
+const darkTheme = createTheme({
+  palette: {
+    mode: 'dark',
+  },
+});
+
 // const testData = `
-// 13.01.25
+// 13.01.2025
 // ah+ws jp+tw 0:1
 // tw+ah ws+jp 0:1
 // ah+jp tw+ws 1:0
 
-// 14.01.25
+// 15.01.2025
 // ws+ah jp+tw 1:0
 // ah+jp tw+ws 1:0
 // tw+ah ws+jp 1:0
 
-// 15.01.25
+// 17.01.2025
 // ah+jp ws+tw 0:1
 // tw+ah jp+ws 0:1
 // ah+ws tw+jp 1:0
 
-// 16.01.25
+// 27.01.2025
 // ah+jp ws+tw 1:0
 // tw+ah jp+ws 0:1
 // ah+ws tw+jp 1:0
 
-// 17.01.25
+// 28.01.2025
 // ws+ah jp+tw 1:0
 // ah+jp tw+ws 0:1
 // ah+tw ws+jp 1:0
 
-// 18.01.25
+// 29.01.2025
 // ah+jp ws+tw 0:1
 // tw+ah jp+ws 1:0
 // ws+ah tw+jp 1:0
 
-// 19.01.25
+// 30.01.2025
 // ah+jp tw+ws 0:1
 // ws+ah jp+tw 1:0
 // tw+ah jp+ws 0:1
 
-// 20.01.25
-// ah+jp sg+ws 0:1
-// ws+ah jp+sg 1:0
-// sg+ah jp+ws 0:1
+// 31.01.2025
+// ah+ws jp+tw 0:1
+// tw+ah ws+jp 1:0
+// ah+jp tw+ws 0:1
+
+// 03.02.2025
+// ah+tw ws+jp 0:1
+// jp+ah tw+ws 1:0
+// ah+ws jp+tw 0:1
+
+// 05.02.2025
+// ws+ah jp+tw 1:0
+// ah+jp tw+ws 1:0
+// ah+tw ws+jp 0:1
 
 // 20.02.25
 // sk+ah jp+mr 0:1
@@ -91,11 +142,18 @@ function App() {
   const [matchStatsSpecific, setMatchStatsSpecific] = useState<Stats[]>([]);
   const [showTrends, setShowTrend] = useState<boolean>(false);
   const [showAllPlayers, setShowAllPlayers] = useState<boolean>(false);
+  const [playersPerformance, setPlayerPerformance] = useState<Trends>({
+    playerTrend: [],
+    playerOffenceTrend: [],
+    playerDefenceTrend: [],
+    players: []
+  });
+
   const tooltipRef = useRef<TooltipRefProps>(null);
 
   useEffect(() => {
     // const results = parseResults(testData);
-    // const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
+    // const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific, trends] = extractStats(results);
     // setPlayerStats(playerStats);
     // setPlayerDStats(playerDStats);
     // setPlayerOStats(playerOStats);
@@ -103,13 +161,14 @@ function App() {
     // setTeamStatsSpecific(teamStatsSpecific);
     // setMatchStatsOverall(matchStatsOverall);
     // setMatchStatsSpecific(matchStatsSpecific);
+    // setPlayerPerformance(trends);
 
     fetch("https://api.github.com/gists/16fc9291f9b939835ade9494a75de5cb")
       .then(response => response.json())
       .then(data => data["files"]["llabsoof.txt"]["content"])
       .then(data => {
         const results = parseResults(data);
-        const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific] = extractStats(results);
+        const [playerStats, playerDStats, playerOStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific, trends] = extractStats(results);
         setPlayerStats(playerStats);
         setPlayerDStats(playerDStats);
         setPlayerOStats(playerOStats);
@@ -117,8 +176,10 @@ function App() {
         setTeamStatsSpecific(teamStatsSpecific);
         setMatchStatsOverall(matchStatsOverall);
         setMatchStatsSpecific(matchStatsSpecific);
+        setPlayerPerformance(trends);
       })
       .catch(error => console.error('Error fetching the text file:', error));
+
   }, [showAllPlayers]);
 
   function parseResults(results: string): Match[] {
@@ -153,21 +214,9 @@ function App() {
 
   const trendMode = (key: string) => (key === 'results' && !showTrends) || (!['results', 'playerOrTeam'].includes(key) && showTrends);
 
-  const getPlayerColor = (player: string) => {
-    switch (player) {
-      case 'AH':
-        return 'text-rose-400';
-      case 'WS':
-        return 'text-cyan-400';
-      case 'JP':
-        return 'text-yellow-400';
-      case 'TW':
-        return 'text-lime-400';
-      case 'vs':
-        return 'text-gray-50';
-      default:
-        return 'text-indigo-300';
-    }
+  const getPlayerColor = (player: string, forChart: boolean = false) => {
+    const color = playersColors[player] ?? playersColors['others'];
+    return color[forChart ? 'color' : 'tailwind'];
   }
 
   const stylePlayers = (value: string) => {
@@ -179,7 +228,7 @@ function App() {
     return players.map(player => (<span key={player} className={`px-1 ${getPlayerColor(player)}`}>{player}</span>));
   };
 
-  const extractStats = (results: Match[]): [Stats[], Stats[], Stats[], Stats[], Stats[], Stats[], Stats[]] => {
+  const extractStats = (results: Match[]): [Stats[], Stats[], Stats[], Stats[], Stats[], Stats[], Stats[], Trends] => {
     const playerStats: { [key: string]: Stats } = {};
     const playerDStats: { [key: string]: Stats } = {};
     const playerOStats: { [key: string]: Stats } = {};
@@ -207,7 +256,16 @@ function App() {
       }
     };
 
-    results.forEach(match => {
+    const trends: Trends = {
+      playerTrend: [],
+      playerOffenceTrend: [],
+      playerDefenceTrend: [],
+      players: []
+    };
+
+    const allPlayers = new Set<string>();
+
+    results.forEach((match, gameNo) => {
       const { team_1, team_2, score } = match;
       const [score1, score2] = score;
 
@@ -234,8 +292,14 @@ function App() {
 
       //
 
-      players.forEach(player => initializeStats(player, playerStats));
-      players.forEach(player => playerStats[player].games++);
+      const playerTrendPoint: TrendPoint = { game: gameNo, date: match.date + gameNo };
+
+      players.forEach(player => {
+        initializeStats(player, playerStats);
+        playerStats[player].games++;
+        playerTrendPoint[player] = 0;
+        allPlayers.add(player);
+      });
 
       if (score1 > score2) {
         team1Players.forEach(player => {
@@ -243,6 +307,7 @@ function App() {
           playerStats[player].results.unshift({ win: true, match });
           playerStats[player].curWinStreak++;
           playerStats[player].curLoseStreak = 0;
+
         });
 
         team2Players.forEach(player => {
@@ -250,6 +315,7 @@ function App() {
           playerStats[player].results.unshift({ win: false, match });
           playerStats[player].curLoseStreak++;
           playerStats[player].curWinStreak = 0;
+
         });
       } else if (score2 > score1) {
         team2Players.forEach(player => {
@@ -257,6 +323,7 @@ function App() {
           playerStats[player].results.unshift({ win: true, match });
           playerStats[player].curWinStreak++;
           playerStats[player].curLoseStreak = 0;
+
         });
 
         team1Players.forEach(player => {
@@ -264,6 +331,7 @@ function App() {
           playerStats[player].results.unshift({ win: false, match });
           playerStats[player].curLoseStreak++;
           playerStats[player].curWinStreak = 0;
+
         });
       }
 
@@ -271,12 +339,24 @@ function App() {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
+
+        const games = stats.results.slice(0, 15);
+        const wins = games.filter(r => r.win).length;
+        playerTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
       });
 
+      if (gameNo % 3 === 2) {
+        trends.playerTrend.push(playerTrendPoint);
+      }
+
       //
+      const playerDefenceTrendPoint: TrendPoint = { game: gameNo, date: match.date + gameNo };
 
       [player1D, player2D].forEach(player => initializeStats(player, playerDStats));
-      [player1D, player2D].forEach(player => playerDStats[player].games++);
+      [player1D, player2D].forEach(player => {
+        playerDStats[player].games++;
+        playerDefenceTrendPoint[player] = 0;
+      });
 
       if (score1 > score2) {
         playerDStats[player1D].wins++;
@@ -304,12 +384,24 @@ function App() {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
+
+        const games = stats.results.slice(0, 15);
+        const wins = games.filter(r => r.win).length;
+        playerDefenceTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
       });
 
+      if (gameNo % 3 === 2) {
+        trends.playerDefenceTrend.push(playerDefenceTrendPoint);
+      }
+
       //
+      const playerOffenceTrendPoint: TrendPoint = { game: gameNo, date: match.date + gameNo };
 
       [player1O, player2O].forEach(player => initializeStats(player, playerOStats));
-      [player1O, player2O].forEach(player => playerOStats[player].games++);
+      [player1O, player2O].forEach(player => {
+        playerOStats[player].games++;
+        playerOffenceTrendPoint[player] = 0;
+      });
 
       if (score1 > score2) {
         playerOStats[player1O].wins++;
@@ -337,7 +429,15 @@ function App() {
         stats.winRate = (stats.wins / stats.games) * 100;
         stats.winStreak = Math.max(stats.winStreak, stats.curWinStreak);
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
+
+        const games = stats.results.slice(0, 15);
+        const wins = games.filter(r => r.win).length;
+        playerOffenceTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
       });
+
+      if (gameNo % 3 === 2) {
+        trends.playerOffenceTrend.push(playerOffenceTrendPoint);
+      }
 
       //
 
@@ -493,6 +593,8 @@ function App() {
       });
     });
 
+    trends.players = [...allPlayers].sort();
+
     return [
       Object.values(playerStats),
       Object.values(playerDStats),
@@ -500,8 +602,45 @@ function App() {
       Object.values(teamStatsOverall),
       Object.values(teamStatsSpecific),
       Object.values(gamesStatsOverall),
-      Object.values(gamesStatsSpecific)];
+      Object.values(gamesStatsSpecific),
+      trends];
   };
+
+  const TrendChart = ({ title, trend, players }: { title: string, trend: TrendPoint[], players: string[] }) => {
+
+    const series: MakeOptional<LineSeriesType, 'type'>[] = players.map(player => ({
+      id: player,
+      label: player,
+      dataKey: player,
+      showMark: false,
+      curve: "natural",
+      color: getPlayerColor(player, true)
+    }));
+
+    return (
+      <div>
+        <div className="w-full max-w-5xl mb-8">
+          <h2 className="text-2xl font-bold mb-4">{title}</h2>
+        </div>
+
+        <LineChart
+          dataset={trend}
+          xAxis={[
+            {
+              id: 'Games',
+              dataKey: 'date',
+              scaleType: 'point',
+              valueFormatter: (date: string) => date.substring(0, 10)
+            },
+          ]}
+          series={series}
+          width={930}
+          height={500}
+        >
+        </LineChart>
+      </div>
+    );
+  }
 
   const SortableTable = <T extends Stats>({ data, title, statsFor }: SortableTableProps<T>) => {
     const [sortField, setSortField] = useState<keyof T>('winRate');
@@ -668,77 +807,71 @@ function App() {
 
   return (
 
-    <div className="p-6 space-y-8">
+    <ThemeProvider theme={darkTheme}>
+      <div className="p-6 space-y-8">
 
-      <Toggle title='Show trends' value={showTrends} className='sm:hidden' callback={(newVal) => setShowTrend(newVal)} />
+        <Toggle title='Show trends' value={showTrends} className='sm:hidden' callback={(newVal) => setShowTrend(newVal)} />
 
-      <Toggle title='Show all players' value={showAllPlayers} callback={(newVal) => setShowAllPlayers(newVal)} />
+        <Toggle title='Show all players' value={showAllPlayers} callback={(newVal) => setShowAllPlayers(newVal)} />
 
-      <SortableTable<Stats>
-        data={playerStats}
-        title="Player Statistics"
-        statsFor="Player" />
+        <TrendChart title='Performance Trend (Win Rate over 15 games)' trend={playersPerformance.playerTrend} players={playersPerformance.players} />
 
-      <SortableTable<Stats>
-        data={playerDStats}
-        title="Player Statistics (Defence)"
-        statsFor="Player" />
+        <TrendChart title='Performance Trend (Defence)' trend={playersPerformance.playerDefenceTrend} players={playersPerformance.players} />
 
-      <SortableTable<Stats>
-        data={playerOStats}
-        title="Player Statistics (Offence)"
-        statsFor="Player" />
+        <TrendChart title='Performance Trend (Offence)' trend={playersPerformance.playerOffenceTrend} players={playersPerformance.players} />
 
-      <SortableTable<Stats>
-        data={teamStatsOverall}
-        title="Team Statistics (Overall)"
-        statsFor="Team" />
+        <SortableTable<Stats>
+          data={playerStats}
+          title="Player Statistics"
+          statsFor="Player" />
 
-      <SortableTable<Stats>
-        data={teamStatsSpecific}
-        title="Team Statistics (Defence Offence)"
-        statsFor="Team" />
+        <SortableTable<Stats>
+          data={playerDStats}
+          title="Player Statistics (Defence)"
+          statsFor="Player" />
 
-      <SortableTable<Stats>
-        data={matchStatsOverall}
-        title="Match Statistics (Overall)"
-        statsFor="Match" />
+        <SortableTable<Stats>
+          data={playerOStats}
+          title="Player Statistics (Offence)"
+          statsFor="Player" />
 
-      <SortableTable<Stats>
-        data={matchStatsSpecific}
-        title="Match Statistics (Defence Offence)"
-        statsFor="Match" />
+        <SortableTable<Stats>
+          data={teamStatsOverall}
+          title="Team Statistics (Overall)"
+          statsFor="Team" />
 
-      <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
+        <SortableTable<Stats>
+          data={teamStatsSpecific}
+          title="Team Statistics (Defence Offence)"
+          statsFor="Team" />
 
-        if (!content) {
-          return null;
-        }
+        <SortableTable<Stats>
+          data={matchStatsOverall}
+          title="Match Statistics (Overall)"
+          statsFor="Match" />
 
-        const parts = content?.split('|')!;
-        const date = parts[0];
-        const teams = parts[1];
-        return (<div>
-          <div className="text-gray-200 text-center">{date}</div>
-          {stylePlayers(teams)}
-        </div>);
-      }} />
-    </div>
+        <SortableTable<Stats>
+          data={matchStatsSpecific}
+          title="Match Statistics (Defence Offence)"
+          statsFor="Match" />
+
+        <Tooltip id="my-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={({ content }) => {
+
+          if (!content) {
+            return null;
+          }
+
+          const parts = content?.split('|')!;
+          const date = parts[0];
+          const teams = parts[1];
+          return (<div>
+            <div className="text-gray-200 text-center">{date}</div>
+            {stylePlayers(teams)}
+          </div>);
+        }} />
+      </div>
+    </ThemeProvider>
   );
 }
 
 export default App
-
-
-
-
-// Alternative Ideas:
-// Weighted Win Rate (more weight on recent games) to reflect momentum more accurately.
-// Elo Rating or Glicko-2 if you want a more advanced ranking system.
-// Performance Index (e.g., factoring in score differences, difficulty of opponents).
-// Naming the Chart:
-// "Current Form – Last 10 Games" (straightforward)
-// "Recent Win Rate" (if win rate is the only metric)
-// "Performance Trend" (if adding other factors)
-// "Momentum Tracker" (if focusing on streaks)
-// "Player Streak Chart" (if emphasizing streaks over win rate)
