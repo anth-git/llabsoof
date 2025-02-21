@@ -64,7 +64,7 @@ const playersColors: PlayersColors = {
   'AH': { tailwind: 'text-rose-400', color: 'oklch(0.712 0.194 13.428)' },
   'WS': { tailwind: 'text-cyan-400', color: 'oklch(0.789 0.154 211.53)' },
   'JP': { tailwind: 'text-yellow-400', color: 'oklch(0.852 0.199 91.936)' },
-  'TW': { tailwind: 'text-lime-400', color: 'oklch(0.841 0.238 128.85)' },
+  'TW': { tailwind: 'text-violet-400', color: 'oklch(.606 .25 292.717)' },
   'others': { tailwind: 'text-indigo-300', color: 'oklch(0.785 0.115 274.713)' },
   'vs': { tailwind: 'text-gray-50', color: 'oklch(0.5 0.5 0)' },
 }
@@ -126,10 +126,25 @@ const darkTheme = createTheme({
 // ah+jp tw+ws 1:0
 // ah+tw ws+jp 0:1
 
-// 20.02.25
-// sk+ah jp+mr 0:1
-// ah+jp mr+sk 1:0
-// ah+mr sk+jp 1:0
+// 07.02.2025
+// ws+ah jp+tw 0:1
+// ah+jp tw+ws 0:1
+// tw+ah ws+jp 0:1
+
+// 10.02.2025
+// jp+ah ws+tw 1:0
+// ah+ws jp+tw 1:0
+// tw+ah ws+jp 0:1
+
+// 12.02.2025
+// jp+ah tw+ws 0:1
+// ah+tw ws+jp 0:1
+// ws+ah jp+tw 1:0
+
+// 19.02.2025
+// ws+ah jp+tw 0:1
+// ah+jp tw+ws 1:0
+// ah+tw ws+jp 1:0
 // `;
 
 function App() {
