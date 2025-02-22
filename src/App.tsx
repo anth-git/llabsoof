@@ -65,7 +65,7 @@ const playersColors: PlayersColors = {
   'WS': { tailwind: 'text-cyan-400', color: 'oklch(0.789 0.154 211.53)' },
   'JP': { tailwind: 'text-yellow-400', color: 'oklch(0.852 0.199 91.936)' },
   'TW': { tailwind: 'text-violet-400', color: 'oklch(.606 .25 292.717)' },
-  'others': { tailwind: 'text-indigo-300', color: 'oklch(0.785 0.115 274.713)' },
+  'others': { tailwind: 'text-lime-600', color: 'oklch(0.648 0.2 131.684)' },
   'vs': { tailwind: 'text-gray-50', color: 'oklch(0.5 0.5 0)' },
 }
 
@@ -145,6 +145,16 @@ const darkTheme = createTheme({
 // ws+ah jp+tw 0:1
 // ah+jp tw+ws 1:0
 // ah+tw ws+jp 1:0
+
+// 20.02.25
+// sk+ah jp+mr 0:1
+// ah+jp mr+sk 1:0
+// ah+mr sk+jp 1:0
+
+// 21.02.25
+// ws+ah jp+tw 0:1
+// ah+jp ws+tw 0:1
+// tw+ah ws+jp 1:0
 // `;
 
 function App() {
@@ -280,6 +290,10 @@ function App() {
 
     const allPlayers = new Set<string>();
 
+    const weight = 0.05;
+    const oddWeights = Array.from({ length: 15 }, (_, i) => (1 + 7 * weight) - i * weight);
+    const evenWeights = oddWeights.filter(w => w != 1)
+
     results.forEach((match, gameNo) => {
       const { team_1, team_2, score } = match;
       const [score1, score2] = score;
@@ -356,8 +370,14 @@ function App() {
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
 
         const games = stats.results.slice(0, 15);
-        const wins = games.filter(r => r.win).length;
-        playerTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
+
+        // const wins = games.filter(r => r.win).length;
+        const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const performance = games.reduce((sum, game, i) => {
+          const offset = (weights.length - games.length) / 2;
+          return sum + (game.win ? 1 : 0) * weights[i + offset];
+        }, 0);
+        playerTrendPoint[stats.playerOrTeam] = performance / games.length * 100;
       });
 
       if (gameNo % 3 === 2) {
@@ -401,8 +421,14 @@ function App() {
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
 
         const games = stats.results.slice(0, 15);
-        const wins = games.filter(r => r.win).length;
-        playerDefenceTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
+        //const wins = games.filter(r => r.win).length;
+        const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const performance = games.reduce((sum, game, i) => {
+          const offset = (weights.length - games.length) / 2;
+          return sum + (game.win ? 1 : 0) * weights[i + offset];
+        }, 0);
+
+        playerDefenceTrendPoint[stats.playerOrTeam] = performance / games.length * 100;
       });
 
       if (gameNo % 3 === 2) {
@@ -446,8 +472,14 @@ function App() {
         stats.loseStreak = Math.max(stats.loseStreak, stats.curLoseStreak);
 
         const games = stats.results.slice(0, 15);
-        const wins = games.filter(r => r.win).length;
-        playerOffenceTrendPoint[stats.playerOrTeam] = wins / games.length * 100;
+        //const wins = games.filter(r => r.win).length;
+        const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const performance = games.reduce((sum, game, i) => {
+          const offset = (weights.length - games.length) / 2;
+          return sum + (game.win ? 1 : 0) * weights[i + offset];
+        }, 0);
+
+        playerOffenceTrendPoint[stats.playerOrTeam] = performance / games.length * 100;
       });
 
       if (gameNo % 3 === 2) {
@@ -629,7 +661,8 @@ function App() {
       dataKey: player,
       showMark: false,
       curve: "natural",
-      color: getPlayerColor(player, true)
+      color: getPlayerColor(player, true),
+      valueFormatter: (value: number | null) => `${value?.toFixed()}%`
     }));
 
     return (
@@ -648,9 +681,14 @@ function App() {
               valueFormatter: (date: string) => date.substring(0, 10)
             },
           ]}
+          yAxis={[{
+            min: 0,
+            max: 100,
+          }]}
           series={series}
           width={930}
           height={500}
+
         >
         </LineChart>
       </div>
@@ -829,7 +867,7 @@ function App() {
 
         <Toggle title='Show all players' value={showAllPlayers} callback={(newVal) => setShowAllPlayers(newVal)} />
 
-        <TrendChart title='Performance Trend (Win Rate over 15 games)' trend={playersPerformance.playerTrend} players={playersPerformance.players} />
+        <TrendChart title='Performance Trend (weighted Win Rate over 15 games)' trend={playersPerformance.playerTrend} players={playersPerformance.players} />
 
         <TrendChart title='Performance Trend (Defence)' trend={playersPerformance.playerDefenceTrend} players={playersPerformance.players} />
 
