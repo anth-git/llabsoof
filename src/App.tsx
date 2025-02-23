@@ -76,87 +76,15 @@ const darkTheme = createTheme({
   },
 });
 
-// const testData = `
-// 13.01.2025
-// ah+ws jp+tw 0:1
-// tw+ah ws+jp 0:1
-// ah+jp tw+ws 1:0
+const fetchData = (debug: boolean = false) => {
+  if (debug) {
+    return Promise.resolve(testData);
+  }
 
-// 15.01.2025
-// ws+ah jp+tw 1:0
-// ah+jp tw+ws 1:0
-// tw+ah ws+jp 1:0
-
-// 17.01.2025
-// ah+jp ws+tw 0:1
-// tw+ah jp+ws 0:1
-// ah+ws tw+jp 1:0
-
-// 27.01.2025
-// ah+jp ws+tw 1:0
-// tw+ah jp+ws 0:1
-// ah+ws tw+jp 1:0
-
-// 28.01.2025
-// ws+ah jp+tw 1:0
-// ah+jp tw+ws 0:1
-// ah+tw ws+jp 1:0
-
-// 29.01.2025
-// ah+jp ws+tw 0:1
-// tw+ah jp+ws 1:0
-// ws+ah tw+jp 1:0
-
-// 30.01.2025
-// ah+jp tw+ws 0:1
-// ws+ah jp+tw 1:0
-// tw+ah jp+ws 0:1
-
-// 31.01.2025
-// ah+ws jp+tw 0:1
-// tw+ah ws+jp 1:0
-// ah+jp tw+ws 0:1
-
-// 03.02.2025
-// ah+tw ws+jp 0:1
-// jp+ah tw+ws 1:0
-// ah+ws jp+tw 0:1
-
-// 05.02.2025
-// ws+ah jp+tw 1:0
-// ah+jp tw+ws 1:0
-// ah+tw ws+jp 0:1
-
-// 07.02.2025
-// ws+ah jp+tw 0:1
-// ah+jp tw+ws 0:1
-// tw+ah ws+jp 0:1
-
-// 10.02.2025
-// jp+ah ws+tw 1:0
-// ah+ws jp+tw 1:0
-// tw+ah ws+jp 0:1
-
-// 12.02.2025
-// jp+ah tw+ws 0:1
-// ah+tw ws+jp 0:1
-// ws+ah jp+tw 1:0
-
-// 19.02.2025
-// ws+ah jp+tw 0:1
-// ah+jp tw+ws 1:0
-// ah+tw ws+jp 1:0
-
-// 20.02.2025
-// sk+ah jp+mr 0:1
-// ah+jp mr+sk 1:0
-// ah+mr sk+jp 1:0
-
-// 21.02.2025
-// ws+ah jp+tw 0:1
-// ah+jp ws+tw 0:1
-// tw+ah ws+jp 1:0
-// `;
+  return fetch("https://api.github.com/gists/16fc9291f9b939835ade9494a75de5cb")
+    .then(response => response.json())
+    .then(data => data["files"]["llabsoof.txt"]["content"])
+}
 
 function App() {
   const [playerStats, setPlayerStats] = useState<Stats[]>([]);
@@ -182,38 +110,33 @@ function App() {
   const tooltipRef = useRef<TooltipRefProps>(null);
 
   useEffect(() => {
-    // const results = parseResults(testData);
-    // const [playerStats, playerDefenseStats, playerOffenseStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific, trends] = extractStats(results);
-    // setPlayerStats(playerStats);
-    // setPlayerDefenseStats(playerDefenseStats);
-    // setPlayerOffenseStats(playerOffenseStats);
-    // setTeamStatsOverall(teamStatsOverall);
-    // setTeamStatsSpecific(teamStatsSpecific);
-    // setMatchStatsOverall(matchStatsOverall);
-    // setMatchStatsSpecific(matchStatsSpecific);
-    // setPlayerPerformance(trends);
-    // setHiddenPerformanceSeries(trends.players.filter(player => player.includes('_wr')));
-    // setHiddenDefensePerformanceSeries(trends.players.filter(player => player.includes('_wr')));
-    // setHiddenOffensePerformanceSeries(trends.players.filter(player => player.includes('_wr')));
 
-    fetch("https://api.github.com/gists/16fc9291f9b939835ade9494a75de5cb")
-      .then(response => response.json())
-      .then(data => data["files"]["llabsoof.txt"]["content"])
-      .then(data => {
-        const results = parseResults(data);
-        const [playerStats, playerDefenseStats, playerOffenseStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific, trends] = extractStats(results);
-        setPlayerStats(playerStats);
-        setPlayerDefenseStats(playerDefenseStats);
-        setPlayerOffenseStats(playerOffenseStats);
-        setTeamStatsOverall(teamStatsOverall);
-        setTeamStatsSpecific(teamStatsSpecific);
-        setMatchStatsOverall(matchStatsOverall);
-        setMatchStatsSpecific(matchStatsSpecific);
-        setPlayerPerformance(trends);
-        setHiddenPerformanceSeries(trends.players.filter(player => player.includes('_wr')));
-        setHiddenDefensePerformanceSeries(trends.players.filter(player => player.includes('_wr')));
-        setHiddenOffensePerformanceSeries(trends.players.filter(player => player.includes('_wr')));
-      })
+    fetchData().then(data => {
+      const results = parseResults(data);
+      const [playerStats, playerDefenseStats, playerOffenseStats, teamStatsOverall, teamStatsSpecific, matchStatsOverall, matchStatsSpecific, trends] = extractStats(results);
+      setPlayerStats(playerStats);
+      setPlayerDefenseStats(playerDefenseStats);
+      setPlayerOffenseStats(playerOffenseStats);
+      setTeamStatsOverall(teamStatsOverall);
+      setTeamStatsSpecific(teamStatsSpecific);
+      setMatchStatsOverall(matchStatsOverall);
+      setMatchStatsSpecific(matchStatsSpecific);
+      setPlayerPerformance(trends);
+
+      const requestedPlayers = window.location.pathname
+        .replace('llabsoof', '')
+        .split(/\/|,/)
+        .filter(player => player !== '')
+        .map(player => player.toUpperCase());
+
+      const hiddenPlayers: string[] = requestedPlayers.length > 0
+        ? trends.players.filter(player => !requestedPlayers.includes(player.replace('_wr', '')))
+        : trends.players.filter(player => player.includes('_wr'));
+
+      setHiddenPerformanceSeries(hiddenPlayers);
+      setHiddenDefensePerformanceSeries(hiddenPlayers);
+      setHiddenOffensePerformanceSeries(hiddenPlayers);
+    })
       .catch(error => console.error('Error fetching the text file:', error));
 
   }, [showAllPlayers]);
@@ -222,7 +145,7 @@ function App() {
     const lines = results.split('\n');
     const matches: Match[] = [];
 
-    let date = 'Unknownd date';
+    let date = 'Unknown date';
     for (let line of lines) {
       line = line.trim();
       if (line === '') {
@@ -335,7 +258,8 @@ function App() {
       const everyThirdGame = gameNo % 3 === 2;
 
       if (!showAllPlayers) {
-        if (players.some(player => !corePlayers.includes(player))) {
+        const matchFeaturedNotCorePlayer = players.some(player => !corePlayers.includes(player));
+        if (matchFeaturedNotCorePlayer) {
           return;
         }
       }
@@ -393,8 +317,8 @@ function App() {
 
         const games = stats.results.slice(0, 15);
         const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const offset = (weights.length - games.length) / 2;
         const performance = games.reduce((sum, game, i) => {
-          const offset = (weights.length - games.length) / 2;
           return sum + (game.win ? 1 : 0) * weights[i + offset];
         }, 0);
 
@@ -444,8 +368,8 @@ function App() {
 
         const games = stats.results.slice(0, 15);
         const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const offset = (weights.length - games.length) / 2;
         const performance = games.reduce((sum, game, i) => {
-          const offset = (weights.length - games.length) / 2;
           return sum + (game.win ? 1 : 0) * weights[i + offset];
         }, 0);
 
@@ -495,8 +419,8 @@ function App() {
 
         const games = stats.results.slice(0, 15);
         const weights = games.length % 2 === 0 ? evenWeights : oddWeights;
+        const offset = (weights.length - games.length) / 2;
         const performance = games.reduce((sum, game, i) => {
-          const offset = (weights.length - games.length) / 2;
           return sum + (game.win ? 1 : 0) * weights[i + offset];
         }, 0);
 
@@ -733,8 +657,8 @@ function App() {
           series={series}
           width={930}
           height={500}
-          sx={sx}>
-
+          sx={sx}
+          skipAnimation={true}>
           <ChartsLegend onItemClick={clickHandler} />
         </LineChart>
       </>
@@ -893,7 +817,7 @@ function App() {
     );
   };
 
-  const renderTooltip = ({ content }: { content: string | null }) => {
+  const renderResultsTooltip = ({ content }: { content: string | null }) => {
     if (!content) {
       return null;
     }
@@ -931,7 +855,7 @@ function App() {
         </div>
 
         {showPerformanceTrends && <>
-          <TrendChart title='Performance Trend' tooltip='weighted Win Rate over 15 games + Win Rate so far' trend={playersPerformance.playerTrend} players={playersPerformance.players} hiddenSeries={hiddenPerformanceSeries} updateHiddenSeries={setHiddenPerformanceSeries} />
+          <TrendChart title='Performance Trend' tooltip='Solid line: Weighted Win Rate over 15 games | Dashed line (_wr): Win Rate so far' trend={playersPerformance.playerTrend} players={playersPerformance.players} hiddenSeries={hiddenPerformanceSeries} updateHiddenSeries={setHiddenPerformanceSeries} />
           <TrendChart title='Performance Trend (Defense)' trend={playersPerformance.playerDefenseTrend} players={playersPerformance.players} hiddenSeries={hiddenDefensePerformanceSeries} updateHiddenSeries={setHiddenDefensePerformanceSeries} />
           <TrendChart title='Performance Trend (Offense)' trend={playersPerformance.playerOffenseTrend} players={playersPerformance.players} hiddenSeries={hiddenOffensePerformanceSeries} updateHiddenSeries={setHiddenOffensePerformanceSeries} />
         </>}
@@ -971,7 +895,7 @@ function App() {
           title="Match Statistics (Defense Offense)"
           statsFor="Match" />
 
-        <Tooltip id="results-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={renderTooltip} />
+        <Tooltip id="results-tooltip" delayShow={300} ref={tooltipRef} style={{ backgroundColor: "oklch(.279 .041 260.031)", color: "#222" }} opacity={1} render={renderResultsTooltip} />
         <Tooltip id="performance-tooltip" style={{ backgroundColor: "oklch(.609 .126 221.723)", color: "white" }} opacity={1} />
       </div>
     </ThemeProvider>
@@ -979,3 +903,86 @@ function App() {
 }
 
 export default App
+
+
+const testData = `
+13.01.2025
+ah+ws jp+tw 0:1
+tw+ah ws+jp 0:1
+ah+jp tw+ws 1:0
+
+15.01.2025
+ws+ah jp+tw 1:0
+ah+jp tw+ws 1:0
+tw+ah ws+jp 1:0
+
+17.01.2025
+ah+jp ws+tw 0:1
+tw+ah jp+ws 0:1
+ah+ws tw+jp 1:0
+
+27.01.2025
+ah+jp ws+tw 1:0
+tw+ah jp+ws 0:1
+ah+ws tw+jp 1:0
+
+28.01.2025
+ws+ah jp+tw 1:0
+ah+jp tw+ws 0:1
+ah+tw ws+jp 1:0
+
+29.01.2025
+ah+jp ws+tw 0:1
+tw+ah jp+ws 1:0
+ws+ah tw+jp 1:0
+
+30.01.2025
+ah+jp tw+ws 0:1
+ws+ah jp+tw 1:0
+tw+ah jp+ws 0:1
+
+31.01.2025
+ah+ws jp+tw 0:1
+tw+ah ws+jp 1:0
+ah+jp tw+ws 0:1
+
+03.02.2025
+ah+tw ws+jp 0:1
+jp+ah tw+ws 1:0
+ah+ws jp+tw 0:1
+
+05.02.2025
+ws+ah jp+tw 1:0
+ah+jp tw+ws 1:0
+ah+tw ws+jp 0:1
+
+07.02.2025
+ws+ah jp+tw 0:1
+ah+jp tw+ws 0:1
+tw+ah ws+jp 0:1
+
+10.02.2025
+jp+ah ws+tw 1:0
+ah+ws jp+tw 1:0
+tw+ah ws+jp 0:1
+
+12.02.2025
+jp+ah tw+ws 0:1
+ah+tw ws+jp 0:1
+ws+ah jp+tw 1:0
+
+19.02.2025
+ws+ah jp+tw 0:1
+ah+jp tw+ws 1:0
+ah+tw ws+jp 1:0
+
+20.02.2025
+sk+ah jp+mr 0:1
+ah+jp mr+sk 1:0
+ah+mr sk+jp 1:0
+
+21.02.2025
+ws+ah jp+tw 0:1
+ah+jp ws+tw 0:1
+tw+ah ws+jp 1:0
+`;
