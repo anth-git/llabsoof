@@ -586,7 +586,7 @@ function App() {
       });
     });
 
-    trends.players = [...allPlayers].filter(player => corePlayers.includes(player.replace('_wr', ''))).sort();
+    trends.players = [...allPlayers].sort();
 
     return [
       Object.values(playerStats),
