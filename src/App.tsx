@@ -634,12 +634,25 @@ function App() {
       updateHiddenSeries(newHiddenSeries);
     };
 
+    const QuickSwitch = () => {
+      return (<div className="flex space-x-2 cursor-pointer mb-0 select-none">
+        <span>Presets:</span>
+        <span className="text-lime-400" onClick={() => { updateHiddenSeries(players.filter(player => player.includes('_wr'))) }}>Perf</span>
+        <span className="text-green-400" onClick={() => { updateHiddenSeries(players.filter(player => !player.includes('_wr'))) }}>Win_Rate</span>
+        <span className={`${getPlayerColor('AH')}`} onClick={() => { updateHiddenSeries(players.filter(player => !player.includes('AH'))) }}>AH</span>
+        <span className={`${getPlayerColor('JP')}`} onClick={() => { updateHiddenSeries(players.filter(player => !player.includes('JP'))) }}>JP</span>
+        <span className={`${getPlayerColor('TW')}`} onClick={() => { updateHiddenSeries(players.filter(player => !player.includes('TW'))) }}>TW</span>
+        <span className={`${getPlayerColor('WS')}`} onClick={() => { updateHiddenSeries(players.filter(player => !player.includes('WS'))) }}>WS</span>
+      </div>);
+    }
+
     return (
       <>
-        <div className="w-fit mb-8 relative">
-          <h2 className="text-2xl font-bold mb-4" data-tooltip-id="performance-tooltip" data-tooltip-content={tooltip ?? title}>{title}</h2>
+        <div className="w-fit mb-1 relative">
+          <h2 className="text-2xl font-bold" data-tooltip-id="performance-tooltip" data-tooltip-content={tooltip ?? title}>{title}</h2>
         </div>
 
+        <QuickSwitch />
         <LineChart
           dataset={trend}
           xAxis={[
@@ -655,11 +668,16 @@ function App() {
             max: 100,
           }]}
           series={series}
-          width={930}
+          width={1130}
           height={500}
           sx={sx}
-          skipAnimation={true}>
-          <ChartsLegend onItemClick={clickHandler} />
+          skipAnimation={true}
+          slotProps={{
+            legend: {
+              onItemClick: clickHandler
+            },
+          }}>
+
         </LineChart>
       </>
     );
@@ -721,7 +739,7 @@ function App() {
 
     if (!data || data.length === 0) {
       return (
-        <div className="w-full max-w-5xl mb-8">
+        <div className="w-full max-w-6xl mb-8">
           <h2 className="text-2xl font-bold mb-4">{title}</h2>
           <p className="text-gray-50">No data available</p>
         </div>
@@ -763,7 +781,7 @@ function App() {
     }
 
     return (
-      <div className="w-full max-w-5xl mb-8">
+      <div className="w-full max-w-6xl mb-8">
         <h2 className="text-2xl font-bold mb-4">{title}</h2>
         <div className="overflow-x-auto">
           <table className="min-w-full bg-slate-700 shadow-md rounded-lg">
@@ -783,14 +801,14 @@ function App() {
               {sortedData.map((item, index) => (
                 <tr key={index}>
                   {Object.entries(item).filter(([key]) => key !== 'curWinStreak' && key !== 'curLoseStreak').map(([key, value]) => (
-                    <td key={key} className={`px-2 py-3 text-sm text-gray-50 text-center relative ${hideColumnInMobile(key) ? 'hidden' : ''} ${key === 'results' ? 'w-[180px] md:w-[300px] text-right' : ''} sm:table-cell whitespace-nowrap`}>
+                    <td key={key} className={`px-2 py-3 text-sm text-gray-50 text-center relative ${hideColumnInMobile(key) ? 'hidden' : ''} ${key === 'results' ? 'w-[180px] md:w-[500px] text-right' : ''} sm:table-cell whitespace-nowrap`}>
                       {(() => {
                         switch (key) {
                           case 'playerOrTeam':
                             return stylePlayers(value);
                           case 'results':
                             return (
-                              <div className="w-[180px] md:w-[300px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }} onMouseDown={handleScroll}>
+                              <div className="w-[180px] md:w-[500px] overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ direction: 'rtl' }} onMouseDown={handleScroll}>
                                 {(value as Result[]).map((result, idx) => (
                                   <span key={idx} className="cursor-default" data-tooltip-id="results-tooltip" data-tooltip-content={getTooltipData(item, result)}>
                                     {result.win
