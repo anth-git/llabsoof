@@ -66,7 +66,8 @@ const playersColors: PlayersColors = {
   'WS': { tailwind: 'text-cyan-400', color: 'oklch(0.789 0.154 211.53)' },
   'JP': { tailwind: 'text-yellow-400', color: 'oklch(0.852 0.199 91.936)' },
   'TW': { tailwind: 'text-violet-400', color: 'oklch(.606 .25 292.717)' },
-  'others': { tailwind: 'text-lime-600', color: 'oklch(0.648 0.2 131.684)' },
+  'SK': { tailwind: 'text-lime-600', color: 'oklch(0.648 0.2 131.684)' },
+  'others': { tailwind: 'text-gray-50', color: 'oklch(0.5 0.5 0)' },
   'vs': { tailwind: 'text-gray-50', color: 'oklch(0.5 0.5 0)' },
 }
 
